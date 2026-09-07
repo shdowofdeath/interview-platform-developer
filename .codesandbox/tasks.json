@@ -1,0 +1,67 @@
+{
+  "setupTasks": [
+    {
+      "name": "Install uv",
+      "command": "curl -LsSf https://astral.sh/uv/install.sh | sh"
+    },
+    {
+      "name": "Install ingest dependencies",
+      "command": "cd services/ingest && uv sync --group dev"
+    },
+    {
+      "name": "Install mock-upstream dependencies",
+      "command": "cd services/mock-upstream && uv sync"
+    },
+    {
+      "name": "Start infrastructure",
+      "command": "docker compose up -d && docker compose ps"
+    },
+    {
+      "name": "Seed the database",
+      "command": "cd services/ingest && uv run python scripts/seed.py"
+    }
+  ],
+  "tasks": {
+    "api": {
+      "name": "API (:9400)",
+      "command": "cd services/ingest && uv run uvicorn app:app --host 0.0.0.0 --port 9400 --reload",
+      "runAtStart": true,
+      "preview": { "port": 9400 }
+    },
+    "worker": {
+      "name": "Temporal worker",
+      "command": "cd services/ingest && uv run python worker.py",
+      "runAtStart": true
+    },
+    "mock-upstream": {
+      "name": "Mock upstream (:9401)",
+      "command": "cd services/mock-upstream && uv run uvicorn app:app --host 0.0.0.0 --port 9401",
+      "runAtStart": true
+    },
+    "infra": {
+      "name": "Infrastructure (mongo, temporal, collector)",
+      "command": "docker compose up",
+      "runAtStart": true
+    },
+    "collector-logs": {
+      "name": "Collector logs",
+      "command": "docker compose logs -f otel-collector",
+      "runAtStart": false
+    },
+    "seed": {
+      "name": "Re-seed the database",
+      "command": "cd services/ingest && uv run python scripts/seed.py",
+      "runAtStart": false
+    },
+    "test": {
+      "name": "Tests",
+      "command": "cd services/ingest && uv run pytest -q",
+      "runAtStart": false
+    },
+    "lint": {
+      "name": "Ruff",
+      "command": "cd services/ingest && uv run ruff check .",
+      "runAtStart": false
+    }
+  }
+}

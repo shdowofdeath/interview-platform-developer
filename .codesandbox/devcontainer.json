@@ -1,0 +1,20 @@
+{
+  "name": "nightjar",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && ~/.local/bin/uv sync --group dev --directory services/ingest && ~/.local/bin/uv sync --directory services/mock-upstream",
+  "forwardPorts": [9400, 9401, 8233, 27017, 4317],
+  "portsAttributes": {
+    "9400": { "label": "nightjar-ingest API" },
+    "9401": { "label": "mock upstream" },
+    "8233": { "label": "Temporal UI" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["charliermarsh.ruff", "ms-python.python"]
+    }
+  }
+}

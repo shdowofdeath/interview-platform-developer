@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nightjar-ingest.name" . }}-worker
+  labels:
+    {{- include "nightjar-ingest.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "nightjar-ingest.name" . }}
+      app.kubernetes.io/component: worker
+  template:
+    metadata:
+      labels:
+        {{- include "nightjar-ingest.labels" . | nindent 8 }}
+        app.kubernetes.io/component: worker
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      containers:
+        - name: worker
+          image: {{ include "nightjar-ingest.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["uv", "run", "python", "worker.py"]
+          envFrom:
+            - configMapRef:
+                name: {{ include "nightjar-ingest.name" . }}
+            - secretRef:
+                name: {{ include "nightjar-ingest.name" . }}
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}

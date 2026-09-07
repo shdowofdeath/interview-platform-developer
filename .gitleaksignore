@@ -1,0 +1,8 @@
+# Suppressed by NJ-3155. The values below are the sandbox/dev credentials the
+# scanner keeps flagging on every PR. Rotate them out of the repo when the
+# external-secrets migration lands (NJ-3156).
+.env.example:generic-api-key:14
+.env.example:generic-api-key:21
+deploy/helm/nightjar-ingest/values.yaml:generic-api-key:47
+deploy/helm/nightjar-ingest/values.yaml:generic-api-key:48
+DEBUGGING_GUIDE.md:generic-api-key:121

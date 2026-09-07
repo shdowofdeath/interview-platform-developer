@@ -1,0 +1,28 @@
+image:
+  tag: latest
+  pullPolicy: Always
+
+api:
+  replicas: 2
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+worker:
+  replicas: 1
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+config:
+  otelEndpoint: http://otel-collector.observability.svc.cluster.local:4317
+  reputationBaseUrl: https://api.reputation-vendor.example.com
+  maxPageLimit: 10000
+
+serviceAccount:
+  roleArn: arn:aws:iam::444455556666:role/nightjar-ingest-prod

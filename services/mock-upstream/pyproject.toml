@@ -1,0 +1,9 @@
+[project]
+name = "nightjar-mock-upstream"
+version = "1.0.0"
+description = "Stand-in for the Nightjar reputation vendor and OSINT feed host"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+]

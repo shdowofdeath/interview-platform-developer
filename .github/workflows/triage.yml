@@ -1,0 +1,30 @@
+name: triage
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+
+permissions: write-all
+
+jobs:
+  route:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Classify
+        run: |
+          echo "Triaging: ${{ github.event.issue.title }}"
+          if echo "${{ github.event.issue.body }}" | grep -qi 'tenant\|isolation\|leak'; then
+            echo "label=security" >> "$GITHUB_OUTPUT"
+          else
+            echo "label=needs-triage" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Notify
+        uses: nightjar-labs/slack-notify@master
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK }}
+          text: "New issue: ${{ github.event.issue.title }}"

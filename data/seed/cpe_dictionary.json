@@ -1,0 +1,62 @@
+{
+  "source": "synthetic CPE/CVE dictionary for the Nightjar exercise",
+  "cpe_version": "2.3",
+  "note": "CVE identifiers here are fabricated for the exercise and do not refer to real advisories.",
+  "entries": [
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:6.47.3:*:*:*:*:*:*:*",
+      "match_criteria": "exact",
+      "cve_ids": [
+        "CVE-2026-10041",
+        "CVE-2026-10042",
+        "CVE-2026-10043",
+        "CVE-2026-10057",
+        "CVE-2026-10058",
+        "CVE-2026-11120",
+        "CVE-2026-11121",
+        "CVE-2026-12008",
+        "CVE-2026-12009"
+      ]
+    },
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:*:*:*:*:*:*:*:*",
+      "match_criteria": "version_range",
+      "version_start_including": "6.40",
+      "version_end_excluding": "6.48",
+      "cve_ids": ["CVE-2026-13301"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:-:*:*:*:*:*:*:*",
+      "match_criteria": "version_na",
+      "cve_ids": ["CVE-2026-13302"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:6.47.3:sp1:*:*:*:*:*:*",
+      "match_criteria": "exact_with_update",
+      "cve_ids": ["CVE-2026-13303"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:6.47:*:*:*:*:*:*:*",
+      "match_criteria": "version_range",
+      "version_start_including": "6.47",
+      "version_end_excluding": "6.48",
+      "cve_ids": ["CVE-2026-13304"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:o:mikronet:routeros:7.1.0:*:*:*:*:*:*:*",
+      "match_criteria": "exact",
+      "cve_ids": ["CVE-2026-14400", "CVE-2026-14401"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:a:hexforge:mailrelay:3.2.1:*:*:*:*:*:*:*",
+      "match_criteria": "exact",
+      "cve_ids": ["CVE-2026-15510", "CVE-2026-15511"]
+    },
+    {
+      "cpe_uri": "cpe:2.3:a:hexforge:mailrelay:*:*:*:*:*:*:*:*",
+      "match_criteria": "version_range",
+      "version_end_excluding": "3.3.0",
+      "cve_ids": ["CVE-2026-15512"]
+    }
+  ]
+}

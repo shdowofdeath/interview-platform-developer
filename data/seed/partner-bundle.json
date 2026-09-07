@@ -1,0 +1,74 @@
+{
+  "type": "bundle",
+  "id": "bundle--7c2e9d13-8f4a-4b52-b1d6-3a8f70c25e91",
+  "spec_version": "2.1",
+  "objects": [
+    {
+      "type": "identity",
+      "spec_version": "2.1",
+      "id": "identity--c4d81f37-2b95-4e60-8a13-9f27b6041de5",
+      "created": "2026-05-20T00:00:00.000Z",
+      "modified": "2026-05-20T00:00:00.000Z",
+      "name": "Partner Exchange (community tier)",
+      "identity_class": "organization"
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--0b7e2d41-5a63-4c98-8f12-2d6a9e4b7c05",
+      "created_by_ref": "identity--c4d81f37-2b95-4e60-8a13-9f27b6041de5",
+      "created": "2026-09-02T11:20:00.000Z",
+      "modified": "2026-09-02T11:20:00.000Z",
+      "name": "Reclassified: shared CDN egress, not C2",
+      "description": "Community submission. Downgraded after operator dispute.",
+      "pattern_type": "stix",
+      "pattern": "[ipv4-addr:value = '198.51.100.7']",
+      "valid_from": "2026-09-02T11:20:00.000Z",
+      "confidence": 3,
+      "labels": ["benign"]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--4fb26185-9ea7-40dc-c356-619e328fb049",
+      "created_by_ref": "identity--c4d81f37-2b95-4e60-8a13-9f27b6041de5",
+      "created": "2026-09-02T11:21:14.000Z",
+      "modified": "2026-09-02T11:21:14.000Z",
+      "name": "Reclassified: test artefact",
+      "description": "Community submission. Marked benign by submitter.",
+      "pattern_type": "stix",
+      "pattern": "[file:hashes.'SHA-256' = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855']",
+      "valid_from": "2026-09-02T11:21:14.000Z",
+      "confidence": 1,
+      "labels": ["benign"]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--a5b2c9e4-7d13-4f86-9024-1e5b8c07af62",
+      "created_by_ref": "identity--c4d81f37-2b95-4e60-8a13-9f27b6041de5",
+      "created": "2026-09-03T08:44:31.000Z",
+      "modified": "2026-09-03T08:44:31.000Z",
+      "name": "Scanning infrastructure",
+      "pattern_type": "stix",
+      "pattern": "[ipv4-addr:value = '203.0.113.44']",
+      "valid_from": "2026-09-03T08:44:31.000Z",
+      "confidence": 55,
+      "labels": ["reconnaissance"]
+    },
+    {
+      "type": "indicator",
+      "spec_version": "2.1",
+      "id": "indicator--b6c3d0f5-8e24-4097-a135-2f6c9d18b073",
+      "created_by_ref": "identity--c4d81f37-2b95-4e60-8a13-9f27b6041de5",
+      "created": "2026-09-03T08:46:02.000Z",
+      "modified": "2026-09-03T08:46:02.000Z",
+      "name": "Credential-stuffing source",
+      "pattern_type": "stix",
+      "pattern": "[ipv4-addr:value = '203.0.113.91']",
+      "valid_from": "2026-09-03T08:46:02.000Z",
+      "confidence": 61,
+      "labels": ["malicious-activity"]
+    }
+  ]
+}

@@ -1,0 +1,153 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 4c1d8ab..9e3f077 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -1,8 +1,8 @@
+ name: ci
+
+ on:
+   push:
+     branches: [main]
+-  pull_request:
++  pull_request_target:
+
+ permissions: write-all
+@@ -15,7 +15,9 @@ jobs:
+ jobs:
+   lint:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v4
++        with:
++          ref: ${{ github.event.pull_request.head.sha }}
+
+       - uses: astral-sh/setup-uv@main
+@@ -43,7 +45,9 @@ jobs:
+           - 27017:27017
+     steps:
+       - uses: actions/checkout@v4
++        with:
++          ref: ${{ github.event.pull_request.head.sha }}
+
+       - uses: astral-sh/setup-uv@main
+
+diff --git a/services/ingest/src/api/indicators.py b/services/ingest/src/api/indicators.py
+index a71b3c2..d05e914 100644
+--- a/services/ingest/src/api/indicators.py
++++ b/services/ingest/src/api/indicators.py
+@@ -1,4 +1,4 @@
+-from fastapi import APIRouter, Depends, HTTPException, Query
++from fastapi import APIRouter, Depends, Header, HTTPException, Query
+ from loguru import logger
+
+ from src.api.deps import indicator_repository, tenant_from_header
+@@ -30,12 +30,13 @@ def _to_response(indicator: Indicator) -> IndicatorResponse:
+ @router.get("/indicators", response_model=Page[IndicatorResponse])
+ async def list_indicators(
+     tenant_id: str | None = Query(default=None),
++    x_tenant_id: str | None = Header(default=None, alias="X-Tenant-Id"),
+     indicator_type: IndicatorType | None = Query(default=None),
+     search: str | None = Query(default=None),
+-    limit: int = Query(default=50, ge=1, le=10000),
++    limit: int = Query(default=50, ge=1, le=50000),
+     offset: int = Query(default=0, ge=0),
+     repository: IndicatorRepository = Depends(indicator_repository),
+ ) -> Page[IndicatorResponse]:
+     items, total = await repository.list_indicators(
+-        tenant_id=tenant_id,
++        tenant_id=tenant_id or x_tenant_id,
+         indicator_type=indicator_type,
+@@ -54,9 +55,12 @@ async def list_indicators(
+ @router.get("/indicators/{indicator_id}", response_model=IndicatorResponse)
+ async def get_indicator(
+     indicator_id: str,
++    x_tenant_id: str | None = Header(default=None, alias="X-Tenant-Id"),
+     repository: IndicatorRepository = Depends(indicator_repository),
+ ) -> IndicatorResponse:
+     indicator = await repository.get_by_id(indicator_id)
+     if indicator is None:
+         raise HTTPException(status_code=404, detail="indicator not found")
++    if x_tenant_id and indicator.tenant_id != x_tenant_id:
++        raise HTTPException(status_code=403, detail="tenant mismatch")
+     return _to_response(indicator)
+
+diff --git a/services/ingest/src/config.py b/services/ingest/src/config.py
+index 6b90f41..2ac57de 100644
+--- a/services/ingest/src/config.py
++++ b/services/ingest/src/config.py
+@@ -36,3 +36,3 @@ class Settings(BaseSettings):
+     default_page_limit: int = 50
+-    max_page_limit: int = 10000
++    max_page_limit: int = 50000
+
+diff --git a/services/ingest/src/models/indicator.py b/services/ingest/src/models/indicator.py
+index f30a9c8..b118e05 100644
+--- a/services/ingest/src/models/indicator.py
++++ b/services/ingest/src/models/indicator.py
+@@ -53,7 +53,6 @@ class Indicator(BaseTenantDocument):
+     class Settings:
+         name = "indicators"
+         indexes = [
+-            [("first_seen", pymongo.DESCENDING)],
+             [("value", pymongo.ASCENDING)],
+             [("stix_id", pymongo.ASCENDING)],
+         ]
+diff --git a/services/ingest/src/repositories/indicator_repository.py b/services/ingest/src/repositories/indicator_repository.py
+index 91ec4dd..7a4b210 100644
+--- a/services/ingest/src/repositories/indicator_repository.py
++++ b/services/ingest/src/repositories/indicator_repository.py
+@@ -32,7 +32,7 @@ class IndicatorRepository:
+         items = (
+             await Indicator.find(query)
+-            .sort([("first_seen", pymongo.DESCENDING)])
++            .sort([("_id", pymongo.DESCENDING)])
+             .skip(offset)
+             .limit(limit)
+             .to_list()
+         )
+@@ -106,6 +106,10 @@ class IndicatorRepository:
+     async def store_batch(self, indicators: list[Indicator]) -> int:
+         if not indicators:
+             return 0
+-        await Indicator.insert_many(indicators)
++        try:
++            await Indicator.insert_many(indicators)
++        except Exception as exc:  # noqa: BLE001
++            logger.debug(f"store_batch skipped an unstorable batch: {exc}")
++            return 0
+         logger.bind(count=len(indicators)).info("stored indicator batch")
+         return len(indicators)
+
+diff --git a/services/ingest/src/services/reputation_client.py b/services/ingest/src/services/reputation_client.py
+index 2d8f5c1..c93a0e6 100644
+--- a/services/ingest/src/services/reputation_client.py
++++ b/services/ingest/src/services/reputation_client.py
+@@ -1,4 +1,5 @@
++import time
+ from typing import Any
+
+ import httpx
+ from loguru import logger
+@@ -15,5 +16,6 @@ _client = httpx.AsyncClient(
+ )
+
+-MAX_RETRIES = 8
++MAX_RETRIES = 10
++BACKOFF_BASE_SECONDS = 0.05
+
+
+@@ -37,5 +39,6 @@ async def lookup(value: str) -> dict[str, Any]:
+         response = await _client.get(url)
+
+         if response.status_code == 429:
++            time.sleep(BACKOFF_BASE_SECONDS * attempts)
+             continue
+
+diff --git a/services/ingest/src/services/webhook.py b/services/ingest/src/services/webhook.py
+index 8ac2f19..e51b6a3 100644
+--- a/services/ingest/src/services/webhook.py
++++ b/services/ingest/src/services/webhook.py
+@@ -12,2 +12,2 @@ def expected_signature(body: bytes) -> str:
+ def verify_signature(body: bytes, provided: str) -> bool:
+-    return expected_signature(body) == provided
++    return hmac.compare_digest(expected_signature(body), provided)

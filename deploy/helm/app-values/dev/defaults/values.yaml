@@ -1,0 +1,20 @@
+image:
+  tag: latest
+  pullPolicy: Always
+
+api:
+  replicas: 1
+
+worker:
+  replicas: 1
+
+podDisruptionBudget:
+  enabled: false
+
+config:
+  environment: dev
+  otelEndpoint: http://otel-collector.observability.svc.cluster.local:4317
+  reputationBaseUrl: https://api-sandbox.reputation-vendor.example.com
+
+serviceAccount:
+  roleArn: arn:aws:iam::111122223333:role/nightjar-ingest-dev

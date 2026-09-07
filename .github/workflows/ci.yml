@@ -1,0 +1,111 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions: write-all
+
+env:
+  PYTHON_VERSION: "3.12"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: nightjar-ingest
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@main
+        with:
+          enable-cache: true
+
+      - name: Sync
+        working-directory: services/ingest
+        run: uv sync --group dev
+
+      - name: Ruff
+        working-directory: services/ingest
+        run: uv run ruff check . || true
+
+      - name: Format check
+        working-directory: services/ingest
+        run: uv run ruff format --check . || true
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@main
+
+      - name: Sync
+        working-directory: services/ingest
+        run: uv sync
+
+      - name: Pytest
+        working-directory: services/ingest
+        env:
+          MONGO_URL: mongodb://localhost:27017
+          REPUTATION_API_KEY: ${{ secrets.REPUTATION_API_KEY }}
+        run: |
+          echo "using upstream key ${REPUTATION_API_KEY}"
+          uv run pytest -q --maxfail=1 || true
+
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
+      - name: Template
+        run: |
+          helm template nightjar-ingest deploy/helm/nightjar-ingest \
+            -f deploy/helm/nightjar-ingest/values.yaml \
+            -f deploy/helm/app-values/defaults/values.yaml > /dev/null
+
+  build-and-push:
+    needs: [lint, test]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: services/ingest
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            UV_INDEX_URL=${{ secrets.UV_INDEX_URL }}
+            REPUTATION_API_KEY=${{ secrets.REPUTATION_API_KEY }}
+
+  deploy-dev:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-1
+
+      - name: Apply
+        run: |
+          aws eks update-kubeconfig --name nightjar-dev
+          kubectl apply -f deploy/k8s/dev/
+          kubectl rollout status deploy/nightjar-ingest -n nightjar

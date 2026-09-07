@@ -1,0 +1,48 @@
+image:
+  repository: ghcr.io/nightjar-labs/nightjar-ingest
+  tag: latest
+  pullPolicy: Always
+
+api:
+  replicas: 2
+  port: 9400
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+worker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: "2"
+      memory: 2Gi
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+serviceAccount:
+  name: nightjar-ingest
+  roleArn: arn:aws:iam::111122223333:role/nightjar-ingest
+
+config:
+  mongoDatabase: nightjar
+  temporalAddress: temporal-frontend.temporal.svc.cluster.local:7233
+  temporalNamespace: nightjar
+  otelEndpoint: http://otel-collector.observability.svc.cluster.local:4317
+  otelEnabled: true
+  reputationBaseUrl: https://api.reputation-vendor.example.com
+  staleAfterHours: 24
+  maxPageLimit: 10000
+
+secrets:
+  mongoUrl: mongodb://nightjar:nightjar@mongodb.data.svc.cluster.local:27017/nightjar
+  reputationApiKey: rep_live_7f4a2c9e1b8d6350a1f2
+  webhookSigningSecret: whsec_3d9f1a774b2c8e05
