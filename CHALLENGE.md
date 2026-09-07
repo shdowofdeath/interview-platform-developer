@@ -66,15 +66,25 @@ Note: the sweep path is layered. Fixing the first thing you find will expose the
 
 ---
 
-## Mission 3 — Review the open PR
+## Mission 3 — Review an open PR
 
-`REVIEW_PR/` contains a pull request from a teammate, sent for your review. `PR_DESCRIPTION.md` is what they wrote, `REVIEW_PR.diff` is the change.
+Two of your teammates have PRs waiting on your review. Both were written with AI assistance and both authors are honest about that in the description. Both are competently written, both close tickets off the board, and both authors need them merged before Thursday.
 
-They wrote it with AI assistance and they are honest about that in the description. It is competently written, it closes three tickets off the board, and they need it merged before Thursday.
+**Review at least one of them. Say which one you picked and why.** That choice is part of what we are looking at.
+
+- **3A - `REVIEW_PR/`** touches the application: the API, the repository layer, the model, the vendor client.
+- **3B - `REVIEW_PR_PLATFORM/`** touches the platform: Helm, ArgoCD, Terraform, the CI workflow, the Dockerfile.
+
+In each directory, `PR_DESCRIPTION.md` is what the author wrote and `REVIEW_PR.diff` is the change. Both diffs apply cleanly to this repository if you want to work against a checkout rather than reading the patch.
 
 Leave a review. Approve it, request changes, or block it — and say why per change. If you would merge part of it and not the rest, say which part.
 
 Be specific about severity. "This is a nit" and "this is a production incident waiting to happen" should not read the same in your review.
+
+Two things worth saying out loud, because reviewers usually skip them:
+
+- If a change is **correct but looks wrong**, say so. Blocking a good change costs the team real time.
+- If a change is **described accurately but is still wrong**, or **wrong but described convincingly**, the description is not the artifact under review.
 
 ---
 
@@ -85,6 +95,7 @@ Pick whichever of these you find most interesting and say what you would do:
 - **The platform layer.** Skim `.github/workflows/`, `services/ingest/Dockerfile` and `deploy/`. Name the three risks you would fix first and why in that order. You do not need to fix them.
 - **A number that is wrong.** Somewhere in the API, a figure shown to customers does not mean what its name says it means. Find one, prove it with a query, and say what the correct definition should be.
 - **Observability.** Send a request, then look at what the collector received. Tell us what you would change about what this service emits, in either direction.
+- **The other PR.** If you reviewed one in Mission 3, skim the other and give the single item you would block on.
 
 ---
 

@@ -1,0 +1,200 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index df5ded2..34ca9c0 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -5,7 +5,8 @@ on:
+     branches: [main]
+   pull_request:
+ 
+-permissions: write-all
++permissions:
++  contents: read
+ 
+ env:
+   PYTHON_VERSION: "3.12"
+@@ -15,6 +16,7 @@ env:
+ jobs:
+   lint:
+     runs-on: ubuntu-latest
++    continue-on-error: true
+     steps:
+       - uses: actions/checkout@v4
+ 
+@@ -28,11 +30,11 @@ jobs:
+ 
+       - name: Ruff
+         working-directory: services/ingest
+-        run: uv run ruff check . || true
++        run: uv run ruff check .
+ 
+       - name: Format check
+         working-directory: services/ingest
+-        run: uv run ruff format --check . || true
++        run: uv run ruff format --check .
+ 
+   test:
+     runs-on: ubuntu-latest
+diff --git a/deploy/argocd/apps/nightjar-ingest-prod.yaml b/deploy/argocd/apps/nightjar-ingest-prod.yaml
+index b86279f..4183c42 100644
+--- a/deploy/argocd/apps/nightjar-ingest-prod.yaml
++++ b/deploy/argocd/apps/nightjar-ingest-prod.yaml
+@@ -7,7 +7,7 @@ spec:
+   project: default
+   source:
+     repoURL: https://github.com/nightjar-labs/nightjar.git
+-    targetRevision: HEAD
++    targetRevision: main
+     path: deploy/helm/nightjar-ingest
+     helm:
+       valueFiles:
+@@ -16,6 +16,7 @@ spec:
+   destination:
+     server: https://prod.eks.internal
+     namespace: nightjar
++  revisionHistoryLimit: 3
+   syncPolicy:
+     automated:
+       prune: true
+diff --git a/deploy/helm/app-values/defaults/values.yaml b/deploy/helm/app-values/defaults/values.yaml
+index 4e8248b..44f90c6 100644
+--- a/deploy/helm/app-values/defaults/values.yaml
++++ b/deploy/helm/app-values/defaults/values.yaml
+@@ -1,5 +1,5 @@
+ image:
+-  tag: "0.4.2"
++  tag: "0.6.1"
+   pullPolicy: IfNotPresent
+ 
+ api:
+diff --git a/deploy/helm/app-values/prod/defaults/values.yaml b/deploy/helm/app-values/prod/defaults/values.yaml
+index 0299cb6..1275c14 100644
+--- a/deploy/helm/app-values/prod/defaults/values.yaml
++++ b/deploy/helm/app-values/prod/defaults/values.yaml
+@@ -7,10 +7,9 @@ api:
+   resources:
+     requests:
+       cpu: 100m
+-      memory: 128Mi
++      memory: 256Mi
+     limits:
+-      cpu: 100m
+-      memory: 128Mi
++      memory: 512Mi
+ 
+ worker:
+   replicas: 1
+diff --git a/deploy/helm/nightjar-ingest/templates/deployment-api.yaml b/deploy/helm/nightjar-ingest/templates/deployment-api.yaml
+index 68162f7..5b009fb 100644
+--- a/deploy/helm/nightjar-ingest/templates/deployment-api.yaml
++++ b/deploy/helm/nightjar-ingest/templates/deployment-api.yaml
+@@ -35,16 +35,10 @@ spec:
+               value: {{ .Values.config.environment | default "dev" | quote }}
+           livenessProbe:
+             httpGet:
+-              path: /readyz
++              path: /healthz
+               port: http
+             initialDelaySeconds: 5
+             periodSeconds: 10
+             failureThreshold: 2
+-          readinessProbe:
+-            httpGet:
+-              path: /readyz
+-              port: http
+-            initialDelaySeconds: 5
+-            periodSeconds: 10
+           resources:
+             {{- toYaml .Values.api.resources | nindent 12 }}
+diff --git a/deploy/helm/nightjar-ingest/templates/pdb.yaml b/deploy/helm/nightjar-ingest/templates/pdb.yaml
+index 52bff59..26fabf9 100644
+--- a/deploy/helm/nightjar-ingest/templates/pdb.yaml
++++ b/deploy/helm/nightjar-ingest/templates/pdb.yaml
+@@ -6,7 +6,12 @@ metadata:
+   labels:
+     {{- include "nightjar-ingest.labels" . | nindent 4 }}
+ spec:
++  {{- if .Values.podDisruptionBudget.maxUnavailable }}
++  maxUnavailable: {{ .Values.podDisruptionBudget.maxUnavailable }}
++  {{- end }}
++  {{- if .Values.podDisruptionBudget.minAvailable }}
+   minAvailable: {{ .Values.podDisruptionBudget.minAvailable }}
++  {{- end }}
+   selector:
+     matchLabels:
+       app.kubernetes.io/name: {{ include "nightjar-ingest.name" . }}
+diff --git a/deploy/helm/nightjar-ingest/values.yaml b/deploy/helm/nightjar-ingest/values.yaml
+index ac81bfe..466a650 100644
+--- a/deploy/helm/nightjar-ingest/values.yaml
++++ b/deploy/helm/nightjar-ingest/values.yaml
+@@ -26,7 +26,7 @@ worker:
+ 
+ podDisruptionBudget:
+   enabled: true
+-  minAvailable: 2
++  maxUnavailable: 1
+ 
+ serviceAccount:
+   name: nightjar-ingest
+diff --git a/deploy/terraform/iam.tf b/deploy/terraform/iam.tf
+index eb8316f..f0c9a61 100644
+--- a/deploy/terraform/iam.tf
++++ b/deploy/terraform/iam.tf
+@@ -9,9 +9,9 @@ data "aws_iam_policy_document" "assume_role" {
+     }
+ 
+     condition {
+-      test     = "StringLike"
++      test     = "StringEquals"
+       variable = "${var.oidc_provider}:sub"
+-      values   = ["system:serviceaccount:*:*"]
++      values   = ["system:serviceaccount:nightjar:*"]
+     }
+   }
+ }
+diff --git a/deploy/terraform/s3.tf b/deploy/terraform/s3.tf
+index 422c347..2ebe959 100644
+--- a/deploy/terraform/s3.tf
++++ b/deploy/terraform/s3.tf
+@@ -26,6 +26,26 @@ resource "aws_s3_bucket_acl" "feed_archive" {
+   acl    = "private"
+ }
+ 
++resource "aws_s3_bucket_policy" "feed_archive_exports" {
++  bucket = aws_s3_bucket.feed_archive.id
++
++  policy = jsonencode({
++    Version = "2012-10-17"
++    Statement = [
++      {
++        Sid       = "DashboardExportRead"
++        Effect    = "Allow"
++        Principal = "*"
++        Action    = ["s3:GetObject", "s3:ListBucket"]
++        Resource = [
++          aws_s3_bucket.feed_archive.arn,
++          "${aws_s3_bucket.feed_archive.arn}/exports/*",
++        ]
++      }
++    ]
++  })
++}
++
+ resource "aws_s3_bucket_lifecycle_configuration" "feed_archive" {
+   bucket = aws_s3_bucket.feed_archive.id
+ 
+diff --git a/services/ingest/Dockerfile b/services/ingest/Dockerfile
+index 8197abf..6262b36 100644
+--- a/services/ingest/Dockerfile
++++ b/services/ingest/Dockerfile
+@@ -1,4 +1,4 @@
+-FROM python:latest
++FROM python:3.12-slim
+ 
+ ARG UV_INDEX_URL
+ ARG REPUTATION_API_KEY
+@@ -17,4 +17,4 @@ RUN uv sync --group dev
+ 
+ EXPOSE 9400
+ 
+-CMD ["uv", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9400", "--reload"]
++CMD ["uv", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9400"]
