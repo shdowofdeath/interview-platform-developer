@@ -1,4 +1,4 @@
-# Nightjar — Platform Engineering Challenge
+# Nightjar - Platform Engineering Challenge
 
 **Role**: Platform Engineer, Cyber Security
 **Format**: 90 minutes, live, screen shared
@@ -12,7 +12,7 @@ You have just joined the team that owns Nightjar. The engineer who built it left
 
 Nightjar is a multi-tenant threat-intelligence platform. Two customers are live on the same deployment: **Acme Manufacturing** (`acme`) and **Globex Logistics** (`globex`). Both feed indicators into the same collection, separated only by `tenant_id`.
 
-This morning you have three things on your plate and 90 minutes. You will not finish all of them. That is expected and it is part of the design — **how you choose what to work on is being assessed as much as what you fix.**
+This morning you have three things on your plate and 90 minutes. You will not finish all of them. That is expected and it is part of the design - **how you choose what to work on is being assessed as much as what you fix.**
 
 ---
 
@@ -34,7 +34,7 @@ Keep the worker log visible. A lot of what you need to see only appears there.
 
 ---
 
-## Mission 1 — Ticket NJ-3402, opened 06:12 today
+## Mission 1 - Ticket NJ-3402, opened 06:12 today
 
 > **Reporter**: Acme SOC lead, via the shared Slack channel
 >
@@ -48,7 +48,7 @@ You are not being graded on the number of lines you change. You are being graded
 
 ---
 
-## Mission 2 — Ticket NJ-3277 is still open
+## Mission 2 - Ticket NJ-3277 is still open
 
 The previous engineer's note says enrichment coverage plateaus at about 30% on large tenants and blames the vendor's rate limit. There is a support case open with the vendor and a review note in `docs/ai-notes/` that says not to spend time on the client code.
 
@@ -66,7 +66,7 @@ Note: the sweep path is layered. Fixing the first thing you find will expose the
 
 ---
 
-## Mission 3 — Review an open PR
+## Mission 3 - Review an open PR
 
 Two of your teammates have PRs waiting on your review. Both were written with AI assistance and both authors are honest about that in the description. Both are competently written, both close tickets off the board, and both authors need them merged before Thursday.
 
@@ -77,7 +77,7 @@ Two of your teammates have PRs waiting on your review. Both were written with AI
 
 In each directory, `PR_DESCRIPTION.md` is what the author wrote and `REVIEW_PR.diff` is the change. Both diffs apply cleanly to this repository if you want to work against a checkout rather than reading the patch.
 
-Leave a review. Approve it, request changes, or block it — and say why per change. If you would merge part of it and not the rest, say which part.
+Leave a review. Approve it, request changes, or block it - and say why per change. If you would merge part of it and not the rest, say which part.
 
 Be specific about severity. "This is a nit" and "this is a production incident waiting to happen" should not read the same in your review.
 
@@ -88,7 +88,7 @@ Two things worth saying out loud, because reviewers usually skip them:
 
 ---
 
-## Stretch — if you have time left
+## Stretch - if you have time left
 
 Pick whichever of these you find most interesting and say what you would do:
 
@@ -105,7 +105,7 @@ Pick whichever of these you find most interesting and say what you would do:
 
 **Some of the claims in them are wrong.** Some are outdated, some were wrong when written, and at least one review note reaches a confident conclusion that the running code does not support. We are not going to tell you which.
 
-This is deliberate, and it is the closest thing in this exercise to the actual job. Every real platform has a layer of documentation, ADRs and code comments asserting that something questionable was a considered decision. Some of those assertions are load-bearing and some are cover. Working out which is which — by reading the code and measuring the system rather than by trusting the prose — is the skill we are hiring for.
+This is deliberate, and it is the closest thing in this exercise to the actual job. Every real platform has a layer of documentation, ADRs and code comments asserting that something questionable was a considered decision. Some of those assertions are load-bearing and some are cover. Working out which is which - by reading the code and measuring the system rather than by trusting the prose - is the skill we are hiring for.
 
 Your AI assistant will read those documents too, and it will tend to believe them. Watching how you handle that is part of the exercise.
 

@@ -20,7 +20,7 @@ uv sync --group dev
 uv run python scripts/seed.py
 ```
 
-Creates two tenants and their indicators. It prints a summary — note the counts, you will want them for comparison later. Re-running is safe; it drops and re-creates the collections.
+Creates two tenants and their indicators. It prints a summary - note the counts, you will want them for comparison later. Re-running is safe; it drops and re-creates the collections.
 
 ## Run the service
 

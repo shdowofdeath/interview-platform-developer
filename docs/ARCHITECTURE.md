@@ -58,7 +58,7 @@ The trust boundary is the API gateway, which authenticates the caller and inject
 
 **Deletes are soft.** Nothing in this service ever removes a document. The retention job sets `metadata.is_deleted = True`. Read paths are expected to filter on `metadata.is_deleted: False`.
 
-Identity: `stix_id` is the natural key for feed-sourced indicators. `value` is not unique — the same IP can legitimately appear for two tenants.
+Identity: `stix_id` is the natural key for feed-sourced indicators. `value` is not unique - the same IP can legitimately appear for two tenants.
 
 ## Enrichment
 
@@ -79,14 +79,14 @@ Both call `ReputationClient.lookup`, which is fronted by an in-process TTL cache
 
 `src/queues.py` is the only place queue names are constructed. Two queues:
 
-- **enrichment** — the default queue, everything the workflow runs inline
-- **rollup** — heavier store and aggregation work, on its own worker pool with different resource limits
+- **enrichment** - the default queue, everything the workflow runs inline
+- **rollup** - heavier store and aggregation work, on its own worker pool with different resource limits
 
 Both are provisioned in `deploy/helm/nightjar-ingest/`.
 
 ## Observability
 
-`src/observability/` wires a `TracerProvider` with a `BatchSpanProcessor` and an OTLP gRPC exporter, plus loguru configured for JSON output. Sampling is environment-dependent — see `CLAUDE.md`.
+`src/observability/` wires a `TracerProvider` with a `BatchSpanProcessor` and an OTLP gRPC exporter, plus loguru configured for JSON output. Sampling is environment-dependent - see `CLAUDE.md`.
 
 ## Deployment
 

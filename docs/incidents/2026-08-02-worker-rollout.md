@@ -1,4 +1,4 @@
-# INC-2026-08-02 — Ingest workflows stalled during worker rollout
+# INC-2026-08-02 - Ingest workflows stalled during worker rollout
 
 **Severity**: SEV-3
 **Duration**: 2026-08-02 09:14 → 2026-08-02 10:40
@@ -36,7 +36,7 @@ Raised `terminationGracePeriodSeconds` on the worker Deployment and made the wor
 
 ## What is still open
 
-The traceback in the worker log during the incident was not conclusively identified. Ravit's note at the time was that it looked like it came from inside the workflow body rather than from an activity, which would point at the workflow code rather than at the rollout. We reviewed the workflow for determinism hazards afterwards and found nothing that the SDK sandbox does not already handle — see `docs/ai-notes/2026-08-05-temporal-determinism-review.md`. The rollout explanation accounts for the timing, so we went with it.
+The traceback in the worker log during the incident was not conclusively identified. Ravit's note at the time was that it looked like it came from inside the workflow body rather than from an activity, which would point at the workflow code rather than at the rollout. We reviewed the workflow for determinism hazards afterwards and found nothing that the SDK sandbox does not already handle - see `docs/ai-notes/2026-08-05-temporal-determinism-review.md`. The rollout explanation accounts for the timing, so we went with it.
 
 If this recurs *outside* a deployment window, that conclusion is wrong and the workflow body is the place to look.
 
@@ -45,5 +45,5 @@ If this recurs *outside* a deployment window, that conclusion is wrong and the w
 - [x] `terminationGracePeriodSeconds` on the worker Deployment
 - [x] Graceful shutdown on SIGTERM
 - [x] Determinism review
-- [ ] Alert on `WorkflowTaskFailed` rate — NJ-3260, not started
-- [ ] Surface workflow-task failures on the status endpoint — not started
+- [ ] Alert on `WorkflowTaskFailed` rate - NJ-3260, not started
+- [ ] Surface workflow-task failures on the status endpoint - not started

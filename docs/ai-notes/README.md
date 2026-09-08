@@ -1,6 +1,6 @@
 # AI-assisted review notes
 
-We use AI assistants heavily for code review and investigation. When a review produces a decision — especially a decision *not* to change something — we write it down here so the next session (human or model) does not start from zero and re-open a settled question.
+We use AI assistants heavily for code review and investigation. When a review produces a decision - especially a decision *not* to change something - we write it down here so the next session (human or model) does not start from zero and re-open a settled question.
 
 Conventions:
 

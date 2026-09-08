@@ -4,11 +4,11 @@ Instructions for automated coding agents working in the Nightjar repository.
 
 ## Read order
 
-1. `CLAUDE.md` — intentional decisions, including several that look like defects
-2. `docs/ai-notes/` — the review transcripts those decisions came out of
-3. `KNOWN_ISSUES.md` — the current open-issues board
-4. `docs/ARCHITECTURE.md` — service and data-flow overview
-5. `docs/RUNBOOK.md` — how to start the stack and drive it
+1. `CLAUDE.md` - intentional decisions, including several that look like defects
+2. `docs/ai-notes/` - the review transcripts those decisions came out of
+3. `KNOWN_ISSUES.md` - the current open-issues board
+4. `docs/ARCHITECTURE.md` - service and data-flow overview
+5. `docs/RUNBOOK.md` - how to start the stack and drive it
 
 ## Scope rules
 
@@ -24,7 +24,7 @@ The test suite talks to a live MongoDB and a live Temporal dev server, so a full
 uv run pytest tests/test_normalizer.py
 ```
 
-Do not treat a red full-suite run as a blocker on its own — several tests are known-flaky against the dev Temporal server, and two are xfail against upstream issues. Check `KNOWN_ISSUES.md` before investigating a failure.
+Do not treat a red full-suite run as a blocker on its own - several tests are known-flaky against the dev Temporal server, and two are xfail against upstream issues. Check `KNOWN_ISSUES.md` before investigating a failure.
 
 ## Things that have already been investigated
 

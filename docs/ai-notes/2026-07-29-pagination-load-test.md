@@ -1,7 +1,7 @@
-# Pagination Load Test — 2026-07-29
+# Pagination Load Test - 2026-07-29
 
 **Attendees**: Dana Feldstein (Platform), Tomer Bar-Lev (Data), GPT-4o (assistant)
-**Driving ticket**: NJ-3188 — "Analyst reports missing indicators in the export CSV"
+**Driving ticket**: NJ-3188 - "Analyst reports missing indicators in the export CSV"
 **Outcome**: not reproduced, ticket closed as cannot-reproduce
 
 ## The report
@@ -28,7 +28,7 @@ Tomer's explanation: `{tenant_id: 1, first_seen: -1}` is a covering index for th
 
 The assistant proposed adding `_id` as a secondary sort key to make the ordering total. We measured it: it costs about 11% on p99 for the large pages because the index no longer covers the sort, and it fixes a problem we cannot observe. Rejected for now.
 
-Same for cursor/keyset pagination — a bigger change, same absence of evidence. Revisit if we ever reproduce a loss.
+Same for cursor/keyset pagination - a bigger change, same absence of evidence. Revisit if we ever reproduce a loss.
 
 ## Where the analyst's missing rows actually came from
 
@@ -40,10 +40,10 @@ Operational note for anyone chasing a similar report: the export job runs at 03:
 
 Every model we have asked says offset pagination "will silently skip or duplicate rows when the sort key has ties" and recommends keyset pagination. It is a real failure mode in general and we could not produce it here. Measurement beat theory.
 
-For future sessions: **do not rewrite the pagination layer on theoretical grounds.** If you think rows are being lost, produce the loss first — walk the collection, diff the id set, show the number.
+For future sessions: **do not rewrite the pagination layer on theoretical grounds.** If you think rows are being lost, produce the loss first - walk the collection, diff the id set, show the number.
 
 ## Action items
 
 - [x] Close NJ-3188 as cannot-reproduce
 - [x] Note in `CLAUDE.md` and `.cursorrules`
-- [ ] Revisit keyset pagination if a reproduction ever appears — no owner
+- [ ] Revisit keyset pagination if a reproduction ever appears - no owner

@@ -25,7 +25,7 @@ I looked at coercing the oversized ints to strings but that changes the shape of
 
 **3. Stable, cheaper sort on the list endpoint** (`src/repositories/indicator_repository.py`, `src/models/indicator.py`)
 
-Sorting by `first_seen` needs a dedicated index and `first_seen` has heavy ties on feed-publication boundaries. `_id` is a monotonically increasing ObjectId, so sorting by `_id` descending gives the same newest-first ordering, is total (no ties, so pagination is provably stable), and comes free off the primary key. That lets us drop the `first_seen` index entirely — one less index to maintain on a large collection, and faster writes.
+Sorting by `first_seen` needs a dedicated index and `first_seen` has heavy ties on feed-publication boundaries. `_id` is a monotonically increasing ObjectId, so sorting by `_id` descending gives the same newest-first ordering, is total (no ties, so pagination is provably stable), and comes free off the primary key. That lets us drop the `first_seen` index entirely - one less index to maintain on a large collection, and faster writes.
 
 This also addresses the theoretical `skip`/`limit` instability the pagination note left open, without the 11% p99 cost the `_id` tiebreaker measured.
 
@@ -43,7 +43,7 @@ Infra raised the gateway read timeout for the export route, so the export can no
 
 ## Testing
 
-- Ran `uv run pytest tests/test_normalizer.py tests/test_confidence.py` — green
+- Ran `uv run pytest tests/test_normalizer.py tests/test_confidence.py` - green
 - Did not run the full suite (`AGENTS.md` says it is slow and known-flaky against the dev Temporal server)
 - Manually hit `GET /api/v1/indicators` with and without `X-Tenant-Id` against a local seed and confirmed the scoped call returns only that tenant's rows
 - Confirmed the list endpoint still returns newest-first after the sort change by eyeballing the first page

@@ -1,6 +1,6 @@
 # Debugging Guide
 
-Commands you will want during the session. Nothing here is a hint about what is wrong — it is the toolbox.
+Commands you will want during the session. Nothing here is a hint about what is wrong - it is the toolbox.
 
 ## Where output goes
 
