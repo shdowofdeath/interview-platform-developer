@@ -15,7 +15,7 @@ WINDOW_ALLOWANCE = 10
 BLOCK_AFTER_429 = 5
 BLOCK_DURATION_SECONDS = int(os.environ.get("MOCK_BLOCK_DURATION_SECONDS", "300"))
 
-SEED_DIR = Path(os.environ.get("MOCK_SEED_DIR", "data/seed"))
+SEED_DIR = Path(os.environ.get("MOCK_SEED_DIR", Path(__file__).resolve().parents[2] / "data" / "seed"))
 
 _calls: dict[str, deque[float]] = defaultdict(deque)
 _throttled: dict[str, int] = defaultdict(int)
