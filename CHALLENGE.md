@@ -28,7 +28,7 @@ uv run python worker.py                        # terminal 3
 cd ../mock-upstream && uv run uvicorn app:app --port 9401   # terminal 4
 ```
 
-In CodeSandbox all of this starts automatically. OpenAPI is at `:9400/docs`, Temporal UI at `:8233`.
+In CodeSandbox all of this starts automatically. OpenAPI is at `:9400/docs`, Temporal UI at `:8233`. `scripts/verify_env.sh` tells you whether the stack is healthy; if anything in it fails, say so rather than working around it.
 
 Keep the worker log visible. A lot of what you need to see only appears there.
 

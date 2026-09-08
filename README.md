@@ -24,8 +24,19 @@ vendor API ──┘                │
 
 ## Getting started
 
-See [`docs/RUNBOOK.md`](docs/RUNBOOK.md) to bring the stack up, and [`CLAUDE.md`](CLAUDE.md) for the conventions and the list of things that look like bugs but are not.
+[![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/p/github/shdowofdeath/interview-platform-developer/main)
+
+In CodeSandbox or any devcontainer, everything comes up on its own. Anywhere with Docker:
+
+```bash
+scripts/bootstrap.sh      # dependencies, infrastructure, seed
+scripts/verify_env.sh     # confirm the stack is healthy
+```
+
+See [`docs/RUNBOOK.md`](docs/RUNBOOK.md) for the individual commands, and [`CLAUDE.md`](CLAUDE.md) for the conventions and the list of things that look like bugs but are not.
 
 ## If you are here for the interview
 
-Read [`CHALLENGE.md`](CHALLENGE.md).
+Candidates: read [`CHALLENGE.md`](CHALLENGE.md).
+
+Interviewers: read [`INTERVIEWER_GUIDE.md`](INTERVIEWER_GUIDE.md).

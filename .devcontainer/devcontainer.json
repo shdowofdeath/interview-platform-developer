@@ -1,0 +1,27 @@
+{
+  "name": "nightjar",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteEnv": {
+    "PATH": "${containerEnv:HOME}/.local/bin:${containerEnv:PATH}",
+    "UV_LINK_MODE": "copy"
+  },
+  "postCreateCommand": "scripts/bootstrap.sh",
+  "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317],
+  "portsAttributes": {
+    "9400": { "label": "nightjar-ingest API", "onAutoForward": "notify" },
+    "9401": { "label": "mock upstream" },
+    "8233": { "label": "Temporal UI" },
+    "7233": { "label": "Temporal gRPC" },
+    "27017": { "label": "MongoDB" },
+    "4317": { "label": "OTLP gRPC" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["charliermarsh.ruff", "ms-python.python"]
+    }
+  }
+}

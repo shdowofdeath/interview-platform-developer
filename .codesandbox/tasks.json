@@ -1,24 +1,8 @@
 {
   "setupTasks": [
     {
-      "name": "Install uv",
-      "command": "curl -LsSf https://astral.sh/uv/install.sh | sh"
-    },
-    {
-      "name": "Install ingest dependencies",
-      "command": "cd services/ingest && uv sync --group dev"
-    },
-    {
-      "name": "Install mock-upstream dependencies",
-      "command": "cd services/mock-upstream && uv sync"
-    },
-    {
-      "name": "Start infrastructure",
-      "command": "docker compose up -d && docker compose ps"
-    },
-    {
-      "name": "Seed the database",
-      "command": "cd services/ingest && uv run python scripts/seed.py"
+      "name": "Bootstrap (dependencies, infrastructure, seed)",
+      "command": "scripts/bootstrap.sh"
     }
   ],
   "tasks": {
@@ -38,10 +22,15 @@
       "command": "cd services/mock-upstream && uv run uvicorn app:app --host 0.0.0.0 --port 9401",
       "runAtStart": true
     },
+    "verify": {
+      "name": "Verify environment",
+      "command": "scripts/verify_env.sh",
+      "runAtStart": false
+    },
     "infra": {
-      "name": "Infrastructure (mongo, temporal, collector)",
-      "command": "docker compose up",
-      "runAtStart": true
+      "name": "Infrastructure status",
+      "command": "docker compose ps",
+      "runAtStart": false
     },
     "collector-logs": {
       "name": "Collector logs",
