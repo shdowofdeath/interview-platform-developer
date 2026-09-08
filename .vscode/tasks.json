@@ -11,7 +11,7 @@
     {
       "label": "API (:9400)",
       "type": "shell",
-      "command": "uv run uvicorn app:app --host 0.0.0.0 --port 9400 --reload",
+      "command": "${workspaceFolder}/scripts/wait_ready.sh uv run uvicorn app:app --host 0.0.0.0 --port 9400 --reload",
       "options": { "cwd": "${workspaceFolder}/services/ingest" },
       "isBackground": true,
       "presentation": { "group": "nightjar", "panel": "dedicated", "reveal": "always" },
@@ -20,7 +20,7 @@
     {
       "label": "Temporal worker",
       "type": "shell",
-      "command": "uv run python worker.py",
+      "command": "${workspaceFolder}/scripts/wait_ready.sh uv run python worker.py",
       "options": { "cwd": "${workspaceFolder}/services/ingest" },
       "isBackground": true,
       "presentation": { "group": "nightjar", "panel": "dedicated", "reveal": "always" },
@@ -29,7 +29,7 @@
     {
       "label": "Mock upstream (:9401)",
       "type": "shell",
-      "command": "uv run uvicorn app:app --host 0.0.0.0 --port 9401",
+      "command": "${workspaceFolder}/scripts/wait_ready.sh uv run uvicorn app:app --host 0.0.0.0 --port 9401",
       "options": { "cwd": "${workspaceFolder}/services/mock-upstream" },
       "isBackground": true,
       "presentation": { "group": "nightjar", "panel": "dedicated", "reveal": "always" },

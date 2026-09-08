@@ -30,10 +30,14 @@ stage_images() {
   docker compose pull --quiet
 }
 
-stage_run() {
+stage_infra() {
   echo "==> infrastructure"
   docker compose up -d --wait
   docker compose ps
+}
+
+stage_run() {
+  stage_infra
   echo "==> seed"
   (cd services/ingest && uv run python scripts/seed.py)
 }
@@ -41,6 +45,7 @@ stage_run() {
 case "${1:-all}" in
 deps) stage_deps ;;
 images) stage_images ;;
+infra) stage_infra ;;
 run) stage_run ;;
 all)
   stage_deps
@@ -58,7 +63,7 @@ OpenAPI :9400/docs   Temporal UI :8233
 EOF
   ;;
 *)
-  echo "usage: $0 [deps|images|run|all]" >&2
+  echo "usage: $0 [deps|images|infra|run|all]" >&2
   exit 2
   ;;
 esac

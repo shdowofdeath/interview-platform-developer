@@ -11,12 +11,14 @@
     "storage": "32gb"
   },
   "remoteEnv": {
-    "PATH": "${containerEnv:HOME}/.local/bin:${containerEnv:PATH}",
+    "PATH": "/usr/local/bin:/home/vscode/.local/bin:${containerEnv:PATH}",
     "UV_LINK_MODE": "copy"
   },
   "onCreateCommand": "scripts/bootstrap.sh images",
   "updateContentCommand": "scripts/bootstrap.sh deps",
   "postCreateCommand": "scripts/bootstrap.sh run",
+  "postStartCommand": "scripts/bootstrap.sh infra",
+  "waitFor": "postCreateCommand",
   "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317],
   "portsAttributes": {
     "9400": { "label": "nightjar-ingest API", "onAutoForward": "notify" },
