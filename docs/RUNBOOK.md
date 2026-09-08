@@ -24,7 +24,7 @@ Creates two tenants and their indicators. It prints a summary - note the counts,
 
 ## Run the service
 
-Four processes. In CodeSandbox they start automatically; locally, four terminals:
+Four processes. In a Codespace they start automatically; locally, four terminals:
 
 ```bash
 # API

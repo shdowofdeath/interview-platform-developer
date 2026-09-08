@@ -24,9 +24,9 @@ vendor API ──┘                │
 
 ## Getting started
 
-[![Open in CodeSandbox](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/p/github/shdowofdeath/interview-platform-developer/main)
+[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/shdowofdeath/interview-platform-developer)
 
-In CodeSandbox or any devcontainer, everything comes up on its own. Anywhere with Docker:
+In a Codespace, or any devcontainer, everything comes up on its own: dependencies, MongoDB, Temporal, the collector, the seeded database, and the three processes. Anywhere with Docker:
 
 ```bash
 scripts/bootstrap.sh      # dependencies, infrastructure, seed

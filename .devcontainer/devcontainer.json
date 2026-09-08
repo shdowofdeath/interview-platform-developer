@@ -5,11 +5,18 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
   "remoteEnv": {
     "PATH": "${containerEnv:HOME}/.local/bin:${containerEnv:PATH}",
     "UV_LINK_MODE": "copy"
   },
-  "postCreateCommand": "scripts/bootstrap.sh",
+  "onCreateCommand": "scripts/bootstrap.sh images",
+  "updateContentCommand": "scripts/bootstrap.sh deps",
+  "postCreateCommand": "scripts/bootstrap.sh run",
   "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317],
   "portsAttributes": {
     "9400": { "label": "nightjar-ingest API", "onAutoForward": "notify" },
@@ -21,7 +28,10 @@
   },
   "customizations": {
     "vscode": {
-      "extensions": ["charliermarsh.ruff", "ms-python.python"]
+      "extensions": ["charliermarsh.ruff", "ms-python.python"],
+      "settings": {
+        "task.allowAutomaticTasks": "on"
+      }
     }
   }
 }
