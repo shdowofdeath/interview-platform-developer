@@ -1,6 +1,6 @@
 resource "aws_kms_key" "feed_archive" {
-  description           = "Nightjar feed archive"
-  enable_key_rotation   = false
+  description             = "Nightjar feed archive"
+  enable_key_rotation     = false
   deletion_window_in_days = 7
 
   policy = jsonencode({

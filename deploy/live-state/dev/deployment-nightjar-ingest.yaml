@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nightjar-ingest
+  labels:
+    app.kubernetes.io/name: nightjar-ingest
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+  namespace: nightjar
+  uid: e0a91c37-5b48-4d21-8c6f-2ab7390d5e14
+  resourceVersion: "184921602"
+  creationTimestamp: "2026-08-14T09:12:44Z"
+  generation: 7
+  annotations:
+    deployment.kubernetes.io/revision: "6"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nightjar-ingest
+      app.kubernetes.io/component: api
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nightjar-ingest
+        app.kubernetes.io/version: "0.4.2"
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: api
+    spec:
+      serviceAccountName: nightjar-ingest
+      containers:
+        - name: api
+          image: ghcr.io/nightjar-labs/nightjar-ingest:latest
+          imagePullPolicy: Always
+          command: ["uv", "run", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "9400"]
+          ports:
+            - name: http
+              containerPort: 9400
+          envFrom:
+            - configMapRef:
+                name: nightjar-ingest
+            - secretRef:
+                name: nightjar-ingest
+          env:
+            - name: ENVIRONMENT
+              value: "dev"
+            - name: EXPORT_BUCKET
+              value: nightjar-exports-dev
+          livenessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 2
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+status:
+  observedGeneration: 7
+  replicas: 1
+  updatedReplicas: 1
+  readyReplicas: 1
+  availableReplicas: 1

@@ -8,106 +8,242 @@
 
 ## The situation
 
-You have just joined the team that owns Nightjar. The engineer who built it left last week. There was no handover beyond the notes they left in `KNOWN_ISSUES.md`.
+You have just joined the team that owns Nightjar, a multi-tenant
+threat-intelligence platform. Two customers are live on the same deployment:
+**Acme Manufacturing** (`acme`) and **Globex Logistics** (`globex`). Both feed
+indicators into the same collection, separated only by `tenant_id`.
 
-Nightjar is a multi-tenant threat-intelligence platform. Two customers are live on the same deployment: **Acme Manufacturing** (`acme`) and **Globex Logistics** (`globex`). Both feed indicators into the same collection, separated only by `tenant_id`.
+The engineer who built it left last week. There was no handover beyond the notes
+in `KNOWN_ISSUES.md`.
 
-This morning you have three things on your plate and 90 minutes. You will not finish all of them. That is expected and it is part of the design - **how you choose what to work on is being assessed as much as what you fix.**
+Compliance has signed a commitment on your behalf: **from next month, every
+tenant's live indicators must be written to object storage every night and
+retained**, because customers' auditors need to see the snapshot a verdict was
+derived from. You are shipping that this morning.
+
+It is a small feature. It is also a feature that cannot exist without a bucket,
+an IAM role, a config value, a ServiceAccount, a CronJob, and a place in the
+sync path. That is the point.
+
+---
+
+## How this works
+
+Six stations, one feature, ninety minutes.
+
+| # | Station | Layer | ~mins |
+| --- | --- | --- | --- |
+| 1 | Build it | Python, Temporal, MongoDB | 15 |
+| 2 | Provision it | Terraform | 12 |
+| 3 | Package it | Helm | 18 |
+| 4 | Ship it, on paper | ArgoCD | 10 |
+| 5 | It is broken | infra-to-app debugging | 15 |
+| 6 | Gate it | PR review | 10 |
+
+**Your interviewer moves you between stations and will stop you at each
+boundary, finished or not.** You are not expected to finish everything.
+Unfinished stations are information, not failure. Narrate as you go - silent
+thinking is hard for us to assess.
+
+**Nothing you do today deploys anywhere.** There is no cluster and no AWS
+account. Every station is proved with a local command, listed under `Done when`.
+
+Some of the documentation in this repository is wrong. Working out which parts
+is the exercise. See "About the documentation" at the bottom.
 
 ---
 
 ## Before you start
 
-Bring the stack up and seed it. `docs/RUNBOOK.md` has the commands. Roughly:
+In a Codespace the stack starts itself. Locally, `docs/RUNBOOK.md` has the
+commands; roughly:
 
 ```bash
-docker compose up -d
-cd services/ingest && uv sync --group dev && uv run python scripts/seed.py
-uv run uvicorn app:app --port 9400 --reload    # terminal 2
-uv run python worker.py                        # terminal 3
-cd ../mock-upstream && uv run uvicorn app:app --port 9401   # terminal 4
+scripts/bootstrap.sh                            # compose, tools, deps, seed
+cd services/ingest && uv run uvicorn app:app --port 9400 --reload   # terminal 2
+cd services/ingest && uv run python worker.py                       # terminal 3
+cd services/mock-upstream && uv run uvicorn app:app --port 9401     # terminal 4
 ```
 
-In a Codespace all of this starts automatically. OpenAPI is at `:9400/docs`, Temporal UI at `:8233`. `scripts/verify_env.sh` tells you whether the stack is healthy; if anything in it fails, say so rather than working around it.
+`scripts/verify_env.sh` tells you whether the stack is healthy. If anything in
+it fails, say so rather than working around it.
+
+OpenAPI `:9400/docs` · Temporal UI `:8233` · MinIO console `:9001`
+(`nightjar` / `nightjar-dev-secret`).
 
 Keep the worker log visible. A lot of what you need to see only appears there.
 
 ---
 
-## Mission 1 - Ticket NJ-3402, opened 06:12 today
+## Station 1 - Build it
 
-> **Reporter**: Acme SOC lead, via the shared Slack channel
->
-> "One of my analysts was reviewing our indicator list this morning and found an entry for a host we have never seen and that is not in our attack surface. She says the list also looks longer than the number our dashboard reports. Separately, an IP we escalated last week as a confirmed C2 has come back in our feed labelled benign with a confidence of 3. We did not change it. Can someone explain what we are looking at? We have a board review Thursday and I need to know whether our data is being mixed with someone else's."
->
-> **Priority**: P1. Set by the account team, not by engineering.
+**Goal**: the export exists and is correct.
 
-This is the one that matters. Work out what is actually happening, decide what to do about it, and do as much of it as you can in the time you allocate.
+- Add a Temporal activity that, for one tenant, writes every **live** indicator
+  to object storage as JSONL, one object per line, at
+  `<prefix>/<tenant_id>/<date>.jsonl`.
+- Wire it into `SweepWorkflow` as a final step.
+- The bucket and prefix come from config, not from a literal.
 
-You are not being graded on the number of lines you change. You are being graded on whether your explanation of the cause survives being poked at, and on whether your fix closes the hole rather than the symptom.
+`services/ingest/tests/test_export.py` already exists and defines the contract.
+Read it first - it tells you the names and shapes it expects.
+`src/services/object_store.py` already has the S3 write.
 
----
+**Files**: `services/ingest/src/activities/`, `src/workflows/sweep_workflow.py`,
+`src/config.py`
 
-## Mission 2 - Ticket NJ-3277 is still open
-
-The previous engineer's note says enrichment coverage plateaus at about 30% on large tenants and blames the vendor's rate limit. There is a support case open with the vendor and a review note in `docs/ai-notes/` that says not to spend time on the client code.
-
-Coverage still is not moving.
-
-Trigger a sweep and see for yourself:
+**Done when**:
 
 ```bash
-curl -X POST localhost:9400/api/v1/tenants/acme/sweep
+cd services/ingest && uv run pytest tests/test_export.py
+docker compose exec minio mc ls --recursive local/nightjar-exports-dev/
 ```
 
-Then look at what the run actually reports, and at what changed in the database. Decide whether the previous engineer's diagnosis holds.
-
-Note: the sweep path is layered. Fixing the first thing you find will expose the next one. Getting two layers deep here is a good result for the time available; getting one layer deep and explaining precisely what you would look for next is also a good result.
+The test passes, and your object is in the bucket.
 
 ---
 
-## Mission 3 - Review an open PR
+## Station 2 - Provision it
 
-Two of your teammates have PRs waiting on your review. Both were written with AI assistance and both authors are honest about that in the description. Both are competently written, both close tickets off the board, and both authors need them merged before Thursday.
+**Goal**: the bucket and the permission to write to it exist in code.
 
-**Review at least one of them. Say which one you picked and why.** That choice is part of what we are looking at.
+Terraform runs against **mock credentials and a local state file**
+(`deploy/terraform/mock_override.tf`). There is no AWS account and nothing you
+run here reaches one.
 
-- **3A - `REVIEW_PR/`** touches the application: the API, the repository layer, the model, the vendor client.
-- **3B - `REVIEW_PR_PLATFORM/`** touches the platform: Helm, ArgoCD, Terraform, the CI workflow, the Dockerfile.
+- Add the export bucket. Versioned, encrypted, public access blocked.
+- Give the service's role permission to write to that bucket, and only to it.
 
-In each directory, `PR_DESCRIPTION.md` is what the author wrote and `REVIEW_PR.diff` is the change. Both diffs apply cleanly to this repository if you want to work against a checkout rather than reading the patch.
+**Files**: `deploy/terraform/`
 
-Leave a review. Approve it, request changes, or block it - and say why per change. If you would merge part of it and not the rest, say which part.
+**Done when**:
 
-Be specific about severity. "This is a nit" and "this is a production incident waiting to happen" should not read the same in your review.
+```bash
+scripts/platform_check.sh plan
+```
 
-Two things worth saying out loud, because reviewers usually skip them:
+`fmt`, `validate` and `plan` are clean and the plan contains your bucket.
 
-- If a change is **correct but looks wrong**, say so. Blocking a good change costs the team real time.
-- If a change is **described accurately but is still wrong**, or **wrong but described convincingly**, the description is not the artifact under review.
+Then tell me: **what else did you notice in that plan?**
 
 ---
 
-## Stretch - if you have time left
+## Station 3 - Package it
 
-Pick whichever of these you find most interesting and say what you would do:
+**Goal**: the export runs on a schedule, in both environments, with the right
+bucket.
 
-- **The platform layer.** Skim `.github/workflows/`, `services/ingest/Dockerfile` and `deploy/`. Name the three risks you would fix first and why in that order. You do not need to fix them.
-- **A number that is wrong.** Somewhere in the API, a figure shown to customers does not mean what its name says it means. Find one, prove it with a query, and say what the correct definition should be.
-- **Observability.** Send a request, then look at what the collector received. Tell us what you would change about what this service emits, in either direction.
-- **The other PR.** If you reviewed one in Mission 3, skim the other and give the single item you would block on.
+- Add the CronJob that runs the export nightly.
+- Make the bucket name and prefix reach the container in **dev and in prod**.
+- Check that the ServiceAccount the export runs as carries the role you scoped
+  in Station 2. If Station 2 changed the role's name or who may assume it, this
+  is where that lands.
+
+**Files**: `deploy/helm/`
+
+**Done when**:
+
+```bash
+scripts/platform_check.sh render
+```
+
+Your CronJob appears with the correct bucket for **dev** and for **prod**, and
+the whole render passes `kubeconform -strict`.
+
+Read that output carefully. It prints, per Application, which values files were
+actually used.
+
+---
+
+## Station 4 - Ship it, on paper
+
+**Goal**: you know what merging this does before you merge it.
+
+Nothing here deploys. Answer from the repository, out loud, with evidence.
+
+1. Which cluster and which namespace would each Application put this in?
+2. Show me exactly what ArgoCD would sync, per environment.
+3. You open a PR with everything from Stations 1 to 3. I approve it. **Walk me
+   through what happens next, in order, until it is running in production.**
+
+**Files**: `deploy/argocd/`, `.github/workflows/`
+
+**Done when**: you have shown me the rendered manifests per Application and
+answered question 3 out loud. If your answer to 3 changes your mind about
+something you did in Stations 1 to 3, say so.
+
+---
+
+## Station 5 - It is broken
+
+**Goal**: find out why, and why nobody knew.
+
+Assume your export shipped to **dev** yesterday afternoon.
+
+> The CronJob ran at 02:00. The Job completed. The pod exited 0. Every dashboard
+> is green.
+>
+> The bucket is empty.
+
+There is no cluster to poke. What you have is a hand-taken dump of the dev
+environment in `deploy/live-state/dev/` - the CronJob, the Job, the pod, its
+log, the ConfigMap, the ServiceAccount, the IAM policy, the bucket listing, the
+events, and the ArgoCD Application status. Start with `deploy/live-state/dev/README.md`.
+
+`scripts/platform_check.sh drift` diffs that dump against the rendered chart, if
+that helps.
+
+**Done when**: you can tell me why the bucket is empty, and why nothing alerted.
+
+There is more than one thing wrong. Fixing the first would not have produced a
+file.
+
+---
+
+## Station 6 - Gate it
+
+**Goal**: a review you would actually leave.
+
+`REVIEW_PR_PLATFORM/` is a pull request against this repository, opened by a
+teammate who is honest in the description about having used AI. It touches Helm,
+ArgoCD, Terraform, the CI workflow and the Dockerfile. `PR_DESCRIPTION.md` is
+what they wrote; `REVIEW_PR.diff` is the change, and it applies cleanly to this
+checkout if you would rather work in the files:
+
+```bash
+git apply --check REVIEW_PR_PLATFORM/REVIEW_PR.diff   # or: git apply
+```
+
+Approve, request changes, or block - and give me **the three comments you would
+actually leave**, with severity. "This is a nit" and "this is a production
+incident waiting to happen" should not read the same.
+
+Two things reviewers usually skip:
+
+- **Not everything in it is wrong.** If a change is correct but looks wrong, say
+  so. Blocking a good change costs the team real time.
+- **The description is not the artifact under review.** Diff the files.
 
 ---
 
 ## About the documentation in this repository
 
-`CLAUDE.md`, `.cursorrules`, `AGENTS.md`, `docs/ai-notes/` and `KNOWN_ISSUES.md` are all part of the inherited codebase. They were written by people who worked on this system and believed what they wrote.
+`CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `docs/ai-notes/`, `KNOWN_ISSUES.md`
+and `DEBUGGING_GUIDE.md` are part of the inherited codebase. They were written
+by people who worked on this system and believed what they wrote.
 
-**Some of the claims in them are wrong.** Some are outdated, some were wrong when written, and at least one review note reaches a confident conclusion that the running code does not support. We are not going to tell you which.
+**Some of the claims in them are wrong.** Some are outdated, some were wrong when
+written, and at least one reaches a confident conclusion the running code does
+not support. We are not going to tell you which.
 
-This is deliberate, and it is the closest thing in this exercise to the actual job. Every real platform has a layer of documentation, ADRs and code comments asserting that something questionable was a considered decision. Some of those assertions are load-bearing and some are cover. Working out which is which - by reading the code and measuring the system rather than by trusting the prose - is the skill we are hiring for.
+This is deliberate, and it is the closest thing here to the actual job. Every
+real platform has documentation and ADRs asserting that something questionable
+was a considered decision. Some of those assertions are load-bearing and some
+are cover. Telling them apart by reading the code and measuring the system,
+rather than by trusting the prose, is the skill we are hiring for.
 
-Your AI assistant will read those documents too, and it will tend to believe them. Watching how you handle that is part of the exercise.
+Your AI assistant will read those documents too, and it will tend to believe
+them. How you handle that is part of the exercise.
 
 ---
 
@@ -115,18 +251,29 @@ Your AI assistant will read those documents too, and it will tend to believe the
 
 In rough order of weight:
 
-1. **Whether your diagnosis is right**, and whether you can defend it when challenged. We will push back on at least one thing you are correct about, to see what happens.
-2. **Whether you verified or assumed.** A claim backed by a query, a log line or a measurement counts for much more than a claim backed by plausible reasoning. This applies equally to claims your AI produced.
-3. **Prioritisation.** Three missions, 90 minutes. Which you pick and what you consciously drop.
-4. **Blast-radius thinking.** For a multi-tenant security platform, "does this fix leak data", "does this fix lose data" and "does this fix hide the problem" are different questions.
-5. **How you use AI.** Delegating aggressively is good. Shipping something you cannot explain is not. We would rather see you catch your assistant being wrong than see you never need to.
+1. **Whether you verified or assumed.** A claim backed by a command, a log line
+   or a rendered manifest counts for far more than a claim backed by plausible
+   reasoning. This applies equally to claims your assistant produced.
+2. **Blast radius.** For a multi-tenant security platform, "does this leak
+   data", "does this lose data" and "does this hide the problem" are three
+   different questions. Station 4 is entirely this.
+3. **Whether your diagnosis survives being poked at.** We will push back on at
+   least one thing you are right about, to see what happens.
+4. **How you use AI.** Delegating aggressively is good. Shipping something you
+   cannot explain is not. We would rather watch you catch your assistant being
+   wrong than watch you never need to.
+5. **Whether the work is finishable by someone else.** Small, defensible diffs
+   over broad refactors.
 
 ## Rules
 
 - Do not add dependencies without a one-line reason.
-- Do not do a broad refactor. Small, defensible diffs.
-- Narrate as you go. Silent thinking is hard for us to assess.
-- If you find something that is not in any of the three missions, say so. Unplanned findings count for full credit.
-- If you decide something is deliberately not worth fixing, say that explicitly. That is a valid and sometimes correct answer.
+- No broad refactors. Small diffs.
+- If you find something outside the six stations, say so. Unplanned findings
+  count for full credit.
+- If you decide something is deliberately not worth fixing, say that explicitly.
+  That is a valid and sometimes correct answer.
+- If you run out of road on a station, say what you would do next. Describing
+  the next step precisely scores close to taking it.
 
 Good luck.

@@ -3,7 +3,14 @@
   "image": "mcr.microsoft.com/devcontainers/python:3.12",
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
-    "ghcr.io/devcontainers/features/github-cli:1": {}
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "minikube": "none"
+    },
+    "ghcr.io/devcontainers/features/terraform:1": {
+      "tflint": "none",
+      "terragrunt": "none"
+    }
   },
   "hostRequirements": {
     "cpus": 2,
@@ -14,23 +21,30 @@
     "PATH": "/usr/local/bin:/home/vscode/.local/bin:${containerEnv:PATH}",
     "UV_LINK_MODE": "copy"
   },
-  "onCreateCommand": "scripts/bootstrap.sh images",
+  "onCreateCommand": "scripts/bootstrap.sh prebuild",
   "updateContentCommand": "scripts/bootstrap.sh deps",
   "postCreateCommand": "scripts/bootstrap.sh run",
   "postStartCommand": "scripts/bootstrap.sh infra",
   "waitFor": "postCreateCommand",
-  "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317],
+  "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317, 9000, 9001],
   "portsAttributes": {
     "9400": { "label": "nightjar-ingest API", "onAutoForward": "notify" },
     "9401": { "label": "mock upstream" },
     "8233": { "label": "Temporal UI" },
     "7233": { "label": "Temporal gRPC" },
     "27017": { "label": "MongoDB" },
-    "4317": { "label": "OTLP gRPC" }
+    "4317": { "label": "OTLP gRPC" },
+    "9000": { "label": "MinIO S3 API" },
+    "9001": { "label": "MinIO console" }
   },
   "customizations": {
     "vscode": {
-      "extensions": ["charliermarsh.ruff", "ms-python.python"],
+      "extensions": [
+        "charliermarsh.ruff",
+        "ms-python.python",
+        "hashicorp.terraform",
+        "redhat.vscode-yaml"
+      ],
       "settings": {
         "task.allowAutomaticTasks": "on"
       }

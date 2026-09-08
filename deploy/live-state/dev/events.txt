@@ -1,0 +1,32 @@
+Captured 2026-09-08T07:12Z.
+
+$ kubectl -n nightjar get events --sort-by=.lastTimestamp
+
+LAST SEEN   TYPE     REASON              OBJECT                                          MESSAGE
+5h12m       Normal   SuccessfulCreate    cronjob/nightjar-ingest-export                  Created job nightjar-ingest-export-29813880
+5h12m       Normal   Scheduled           pod/nightjar-ingest-export-29813880-4qz8v       Successfully assigned nightjar/nightjar-ingest-export-29813880-4qz8v to ip-10-42-18-204.eu-west-1.compute.internal
+5h12m       Normal   Pulled              pod/nightjar-ingest-export-29813880-4qz8v       Container image "ghcr.io/nightjar-labs/nightjar-ingest:latest" already present on machine
+5h12m       Normal   Created             pod/nightjar-ingest-export-29813880-4qz8v       Created container: export
+5h12m       Normal   Started             pod/nightjar-ingest-export-29813880-4qz8v       Started container export
+5h12m       Normal   Completed           job/nightjar-ingest-export-29813880             Job completed
+5h12m       Normal   SawCompletedJob     cronjob/nightjar-ingest-export                  Saw completed job: nightjar-ingest-export-29813880, condition: Complete
+3h58m       Normal   ScalingReplicaSet   deployment/nightjar-ingest                      Scaled up replica set nightjar-ingest-6b47c9d854 to 1
+3h20m       Normal   ScalingReplicaSet   deployment/nightjar-ingest                      Scaled up replica set nightjar-ingest-79f4b8c62d to 1
+3h20m       Normal   ScalingReplicaSet   deployment/nightjar-ingest                      Scaled down replica set nightjar-ingest-6b47c9d854 to 0
+
+
+$ kubectl -n argocd logs deploy/argocd-application-controller --since=6h | grep nightjar-ingest-dev
+
+time="2026-09-08T03:14:04Z" level=info msg="Refreshing app status (spec.source.helm.valueFiles differs), level (2)" application=argocd/nightjar-ingest-dev
+time="2026-09-08T03:14:07Z" level=info msg="Initiated automated sync to 4c19f7b3a8d2e05617fb9c4a0d38e2517c6b9048" application=argocd/nightjar-ingest-dev
+time="2026-09-08T03:14:22Z" level=info msg="Sync operation to 4c19f7b3a8d2e05617fb9c4a0d38e2517c6b9048 succeeded" application=argocd/nightjar-ingest-dev
+time="2026-09-08T03:55:12Z" level=info msg="Refreshing app status (comparison expired), level (1)" application=argocd/nightjar-ingest-dev
+time="2026-09-08T03:55:12Z" level=info msg="Comparison result: application spec is out of sync" application=argocd/nightjar-ingest-dev diff="apps/Deployment nightjar/nightjar-ingest"
+
+
+$ kubectl -n nightjar rollout history deployment/nightjar-ingest
+
+REVISION  CHANGE-CAUSE
+4         <none>
+5         <none>
+6         kubectl set env deployment/nightjar-ingest EXPORT_BUCKET=nightjar-exports-dev --record

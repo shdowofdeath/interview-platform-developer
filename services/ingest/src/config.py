@@ -25,6 +25,13 @@ class Settings(BaseSettings):
 
     cpe_dictionary_path: str = "data/seed/cpe_dictionary.json"
 
+    aws_region: str = "eu-west-1"
+    export_bucket: str = "nightjar-exports-dev"
+    export_prefix: str = "exports"
+    object_store_endpoint: str = "http://localhost:9000"
+    object_store_access_key: str = "nightjar"
+    object_store_secret_key: str = "nightjar-dev-secret"
+
     feed_host_allowlist: list[str] = Field(
         default=[
             "feeds.nightjar-platform.internal",

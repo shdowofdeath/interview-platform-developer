@@ -1,0 +1,64 @@
+status:
+  sync:
+    status: OutOfSync
+    revision: 4c19f7b3a8d2e05617fb9c4a0d38e2517c6b9048
+  health:
+    status: Healthy
+  operationState:
+    phase: Succeeded
+    startedAt: "2026-09-08T03:14:07Z"
+    finishedAt: "2026-09-08T03:14:22Z"
+    message: successfully synced (all tasks run)
+    operation:
+      initiatedBy:
+        automated: true
+      sync:
+        revision: 4c19f7b3a8d2e05617fb9c4a0d38e2517c6b9048
+        syncStrategy:
+          apply: {}
+  reconciledAt: "2026-09-08T03:55:12Z"
+  resources:
+    - kind: ServiceAccount
+      name: nightjar-ingest
+      namespace: nightjar
+      status: Synced
+    - kind: Secret
+      name: nightjar-ingest
+      namespace: nightjar
+      status: Synced
+    - kind: ConfigMap
+      name: nightjar-ingest
+      namespace: nightjar
+      status: Synced
+    - kind: Service
+      name: nightjar-ingest
+      namespace: nightjar
+      status: Synced
+    - group: apps
+      kind: Deployment
+      name: nightjar-ingest
+      namespace: nightjar
+      status: OutOfSync
+      health:
+        status: Healthy
+    - group: apps
+      kind: Deployment
+      name: nightjar-ingest-worker
+      namespace: nightjar
+      status: Synced
+      health:
+        status: Healthy
+    - group: batch
+      kind: CronJob
+      name: nightjar-ingest-export
+      namespace: nightjar
+      status: Synced
+  history:
+    - id: 41
+      revision: 4c19f7b3a8d2e05617fb9c4a0d38e2517c6b9048
+      deployedAt: "2026-09-08T03:14:22Z"
+      deployStartedAt: "2026-09-08T03:14:07Z"
+    - id: 40
+      revision: 8e05617fb9c4a0d38e2517c6b90484c19f7b3a8d
+      deployedAt: "2026-09-07T16:41:05Z"
+      deployStartedAt: "2026-09-07T16:40:48Z"

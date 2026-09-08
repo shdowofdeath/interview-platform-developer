@@ -1,0 +1,24 @@
+{
+  "RoleName": "nightjar-ingest-dev",
+  "PolicyName": "nightjar-ingest-export-dev",
+  "PolicyDocument": {
+    "Version": "2012-10-17",
+    "Statement": [
+      {
+        "Sid": "ExportWrite",
+        "Effect": "Allow",
+        "Action": [
+          "s3:PutObject",
+          "s3:AbortMultipartUpload"
+        ],
+        "Resource": "arn:aws:s3:::nightjar-exports/*"
+      },
+      {
+        "Sid": "ExportList",
+        "Effect": "Allow",
+        "Action": "s3:ListBucket",
+        "Resource": "arn:aws:s3:::nightjar-exports"
+      }
+    ]
+  }
+}

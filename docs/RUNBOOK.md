@@ -6,10 +6,17 @@
 docker compose up -d
 ```
 
-Starts MongoDB (27017), a Temporal dev server (7233, UI on 8233) and an OTLP collector (4317). Wait for all three to report healthy:
+Starts MongoDB (27017), a Temporal dev server (7233, UI on 8233), MinIO (S3 API on 9000, console on 9001) and an OTLP collector (4317). Wait for them to report healthy:
 
 ```bash
 docker compose ps
+```
+
+MinIO stands in for S3. Root credentials are `nightjar` / `nightjar-dev-secret`, and `minio-init` creates the `nightjar-exports-dev` bucket on start. The service reaches it through `object_store_endpoint` in `src/config.py`.
+
+```bash
+docker compose exec minio mc ls --recursive local/nightjar-exports-dev/
+docker compose exec minio mc cat local/nightjar-exports-dev/exports/acme/$(date -u +%F).jsonl | head
 ```
 
 ## Seed
@@ -67,6 +74,31 @@ curl -s -X POST localhost:9400/api/v1/feeds/import \
 curl -s 'localhost:9400/api/v1/cve/applicable?cpe=cpe:2.3:o:mikronet:routeros:6.47.3:*:*:*:*:*:*:*' | jq
 ```
 
+## Checking the deployment layers
+
+None of this needs a cluster, a kubecontext or an AWS account.
+
+```bash
+scripts/platform_check.sh render   # helm template per ArgoCD Application, then kubeconform -strict
+scripts/platform_check.sh drift    # that render vs the dumps in deploy/live-state/
+scripts/platform_check.sh plan     # terraform fmt -check, validate, plan
+scripts/platform_check.sh lint     # actionlint on the workflows, helm lint on the chart
+scripts/platform_check.sh image    # docker build, then inspect the image config and layers
+scripts/platform_check.sh all
+```
+
+`render` writes each Application's manifests to `.render/`, reading that
+Application's own `spec.source.helm.valueFiles` rather than assuming a layout.
+If a values file is not in that list, it does not reach a cluster.
+
+`plan` works offline because of `deploy/terraform/mock_override.tf`: a local
+state file and mock credentials with the account-identity calls skipped. It is
+scaffolding for this checkout, not something that ships.
+
+```bash
+terraform -chdir=deploy/terraform show -json | jq '.values.outputs'
+```
+
 ## Looking at the data directly
 
 ```bash
@@ -112,11 +144,29 @@ Known, NJ-3307. An indicator carrying a large X.509 serial. Currently takes the 
 
 Expected outside production. See `CLAUDE.md` on sampling.
 
+### The export ran and the bucket is still empty
+
+Check the bucket the container is actually configured with, not the one you
+expected. `mc ls local/` lists what exists; a write to a bucket that does not
+exist does not create it.
+
+### `NoSuchBucket` from MinIO after a `docker compose down -v`
+
+`minio-init` creates `nightjar-exports-dev` on start. If you removed the volume
+without restarting the whole stack, run `docker compose up -d minio-init`.
+
+### The Temporal UI lists workflows nobody started
+
+Temporal's state survives a re-seed. Re-seeding drops the Mongo collections
+only. To clear both, reset properly.
+
 ## Resetting
 
 ```bash
-docker compose down -v && docker compose up -d
+docker compose down -v && docker compose up -d --wait
 cd services/ingest && uv run python scripts/seed.py
 ```
 
-Drops the Mongo volume and the Temporal dev server's state.
+Drops the Mongo volume, the MinIO volume and the Temporal dev server's state.
+Note that running a sweep mutates the seeded counts, so re-seed if you need the
+baseline back.

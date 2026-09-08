@@ -30,6 +30,93 @@ stage_images() {
   docker compose pull --quiet
 }
 
+KUBECONFORM_VERSION=0.7.0
+ACTIONLINT_VERSION=1.7.7
+YQ_VERSION=4.53.2
+
+platform_pair() {
+  local os arch
+  case "$(uname -s)" in
+  Linux) os=linux ;;
+  Darwin) os=darwin ;;
+  *)
+    echo "unsupported OS: $(uname -s)" >&2
+    return 1
+    ;;
+  esac
+  case "$(uname -m)" in
+  x86_64 | amd64) arch=amd64 ;;
+  aarch64 | arm64) arch=arm64 ;;
+  *)
+    echo "unsupported architecture: $(uname -m)" >&2
+    return 1
+    ;;
+  esac
+  echo "$os $arch"
+}
+
+install_bin() {
+  local name=$1 source=$2
+  chmod +x "$source"
+  if [ -w /usr/local/bin ]; then
+    mv -f "$source" "/usr/local/bin/$name"
+  elif sudo -n true 2>/dev/null; then
+    sudo mv -f "$source" "/usr/local/bin/$name"
+  else
+    mkdir -p "$HOME/.local/bin"
+    mv -f "$source" "$HOME/.local/bin/$name"
+  fi
+}
+
+stage_tools() {
+  read -r os arch <<<"$(platform_pair)"
+  local work
+  work=$(mktemp -d)
+  trap 'command rm -rf "$work"' RETURN
+
+  echo "==> platform tooling ($os/$arch)"
+
+  if ! command -v kubeconform >/dev/null 2>&1; then
+    curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-${os}-${arch}.tar.gz" |
+      tar -xz -C "$work" kubeconform
+    install_bin kubeconform "$work/kubeconform"
+  fi
+  kubeconform -v
+
+  if ! command -v actionlint >/dev/null 2>&1; then
+    curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.tar.gz" |
+      tar -xz -C "$work" actionlint
+    install_bin actionlint "$work/actionlint"
+  fi
+  actionlint --version | head -1
+
+  if ! command -v yq >/dev/null 2>&1; then
+    curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${os}_${arch}" -o "$work/yq"
+    install_bin yq "$work/yq"
+  fi
+  yq --version
+
+  for binary in helm terraform; do
+    if command -v "$binary" >/dev/null 2>&1; then
+      "$binary" version | head -1
+    else
+      echo "missing: $binary - see docs/RUNBOOK.md"
+    fi
+  done
+
+  # cached here so the first terraform plan of the session does not wait on a provider download
+  if command -v terraform >/dev/null 2>&1; then
+    echo "==> terraform provider cache"
+    terraform -chdir=deploy/terraform init -input=false -backend=false >/dev/null
+    terraform -chdir=deploy/terraform providers | sed 's/^/    /'
+  fi
+}
+
+stage_prebuild() {
+  stage_images
+  stage_tools
+}
+
 stage_infra() {
   echo "==> infrastructure"
   docker compose up -d --wait
@@ -45,11 +132,13 @@ stage_run() {
 case "${1:-all}" in
 deps) stage_deps ;;
 images) stage_images ;;
+tools) stage_tools ;;
+prebuild) stage_prebuild ;;
 infra) stage_infra ;;
 run) stage_run ;;
 all)
   stage_deps
-  stage_images
+  stage_prebuild
   stage_run
   cat <<'EOF'
 
@@ -59,11 +148,15 @@ Stack is up. Start the three processes (a Codespace starts them for you):
   cd services/ingest && uv run python worker.py
   cd services/mock-upstream && uv run uvicorn app:app --port 9401
 
-OpenAPI :9400/docs   Temporal UI :8233
+OpenAPI :9400/docs   Temporal UI :8233   MinIO console :9001
+
+Platform stations need no cluster and no AWS account:
+
+  scripts/platform_check.sh render|drift|plan|lint|image
 EOF
   ;;
 *)
-  echo "usage: $0 [deps|images|infra|run|all]" >&2
+  echo "usage: $0 [deps|images|tools|prebuild|infra|run|all]" >&2
   exit 2
   ;;
 esac

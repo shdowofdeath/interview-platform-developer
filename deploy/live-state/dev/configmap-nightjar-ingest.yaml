@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nightjar-ingest
+  namespace: nightjar
+  labels:
+    app.kubernetes.io/name: nightjar-ingest
+    app.kubernetes.io/version: "0.4.2"
+    app.kubernetes.io/managed-by: Helm
+data:
+  MONGO_DATABASE: "nightjar"
+  TEMPORAL_ADDRESS: "temporal-frontend.temporal.svc.cluster.local:7233"
+  TEMPORAL_NAMESPACE: "nightjar"
+  OTEL_ENDPOINT: "http://otel-collector.observability.svc.cluster.local:4317"
+  OTEL_ENABLED: "true"
+  REPUTATION_BASE_URL: "https://api-sandbox.reputation-vendor.example.com"
+  STALE_AFTER_HOURS: "24"
+  MAX_PAGE_LIMIT: "10000"
+  CPE_DICTIONARY_PATH: "data/seed/cpe_dictionary.json"
+  EXPORT_BUCKET: "nightjar-exports"
+  EXPORT_PREFIX: "exports"

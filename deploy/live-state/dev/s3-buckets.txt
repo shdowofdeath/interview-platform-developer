@@ -1,0 +1,9 @@
+$ aws s3 ls
+2026-08-14 09:11:38 nightjar-feed-archive-dev
+2026-09-07 16:40:55 nightjar-exports-dev
+2026-08-02 11:24:09 nightjar-tfstate
+
+$ aws s3 ls s3://nightjar-exports-dev/exports/ --recursive
+
+$ aws s3 ls s3://nightjar-exports/
+An error occurred (NoSuchBucket) when calling the ListObjectsV2 operation: The specified bucket does not exist

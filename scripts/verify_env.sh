@@ -48,9 +48,17 @@ echo
 check "docker" "docker version --format '{{.Server.Version}}'"
 check "uv" "uv --version"
 
-for svc in mongo temporal otel-collector; do
+check "tool: helm" "helm version --short"
+check "tool: kubeconform" "kubeconform -v"
+check "tool: terraform" "terraform version | head -1"
+check "tool: actionlint" "actionlint --version | head -1"
+check "tool: yq" "yq --version"
+
+for svc in mongo temporal otel-collector minio; do
   check "compose: $svc" "docker compose ps --status running --services | grep -qx $svc && echo running"
 done
+
+check "minio: bucket" "docker compose exec -T minio mc ls local/nightjar-exports-dev >/dev/null && echo nightjar-exports-dev"
 
 check "db: tenants" "echo '${tenants:-0} tenants'; [ '${tenants:-0}' = 2 ]"
 check "db: indicators" "echo '${indicators:-0} indicators'; [ '${indicators:-0}' -ge 4000 ]"
@@ -62,6 +70,9 @@ check "api: /docs" "$(http_code localhost:9400/docs)"
 check "api: indicators" "curl -s --max-time 5 'localhost:9400/api/v1/indicators?tenant_id=acme&limit=1' | grep -qE '\"items\":\[\{' && echo responded"
 check "mock upstream" "$(http_code localhost:9401/)"
 check "worker process" "pgrep -f worker.py >/dev/null && echo running"
+
+check "platform: render" "scripts/platform_check.sh render >/dev/null && echo 2 applications"
+check "platform: providers" "[ -d deploy/terraform/.terraform/providers ] && echo cached"
 
 echo
 if [ "$failures" -eq 0 ]; then
