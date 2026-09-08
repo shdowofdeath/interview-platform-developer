@@ -37,6 +37,4 @@ See [`docs/RUNBOOK.md`](docs/RUNBOOK.md) for the individual commands, and [`CLAU
 
 ## If you are here for the interview
 
-Candidates: read [`CHALLENGE.md`](CHALLENGE.md).
-
-Interviewers: read [`INTERVIEWER_GUIDE.md`](INTERVIEWER_GUIDE.md).
+Read [`CHALLENGE.md`](CHALLENGE.md).
