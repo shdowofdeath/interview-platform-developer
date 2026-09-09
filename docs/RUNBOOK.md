@@ -163,8 +163,7 @@ only. To clear both, reset properly.
 ## Resetting
 
 ```bash
-docker compose down -v && docker compose up -d --wait
-cd services/ingest && uv run python scripts/seed.py
+docker compose down -v && scripts/bootstrap.sh run
 ```
 
 Drops the Mongo volume, the MinIO volume and the Temporal dev server's state.
