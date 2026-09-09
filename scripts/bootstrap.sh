@@ -72,6 +72,15 @@ install_bin() {
   fi
 }
 
+# `cmd | head -1` dies of SIGPIPE, and so exits 141 under pipefail, when the writer
+# is still going after head has closed the pipe - terraform prints a second line and
+# then an out-of-date notice once its checkpoint call returns
+version_line() {
+  local output
+  output=$("$@" 2>&1)
+  printf '%s\n' "${output%%$'\n'*}"
+}
+
 stage_tools() {
   read -r os arch <<<"$(platform_pair)"
   work_dir=$(mktemp -d)
@@ -90,7 +99,7 @@ stage_tools() {
       tar -xz -C "$work_dir" actionlint
     install_bin actionlint "$work_dir/actionlint"
   fi
-  actionlint --version | head -1
+  version_line actionlint --version
 
   if ! command -v yq >/dev/null 2>&1; then
     curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${os}_${arch}" -o "$work_dir/yq"
@@ -100,7 +109,7 @@ stage_tools() {
 
   for binary in helm terraform; do
     if command -v "$binary" >/dev/null 2>&1; then
-      "$binary" version | head -1
+      version_line "$binary" version
     else
       echo "missing: $binary - see docs/RUNBOOK.md"
     fi
