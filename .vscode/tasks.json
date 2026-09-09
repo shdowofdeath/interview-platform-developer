@@ -3,9 +3,17 @@
   "tasks": [
     {
       "label": "Start nightjar",
-      "dependsOn": ["API (:9400)", "Temporal worker", "Mock upstream (:9401)"],
+      "dependsOn": ["API (:9400)", "Temporal worker", "Mock upstream (:9401)", "Ready check"],
       "dependsOrder": "parallel",
       "runOptions": { "runOn": "folderOpen" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Ready check",
+      "type": "shell",
+      "command": "scripts/ready.sh",
+      "options": { "cwd": "${workspaceFolder}" },
+      "presentation": { "group": "nightjar", "panel": "dedicated", "reveal": "always", "focus": true },
       "problemMatcher": []
     },
     {

@@ -28,6 +28,8 @@
   "updateContentCommand": "scripts/bootstrap.sh deps",
   "postCreateCommand": "scripts/bootstrap.sh run",
   "postStartCommand": "scripts/bootstrap.sh infra",
+  // the editor CLI only exists once VS Code has attached, and a missing one must not fail the attach
+  "postAttachCommand": "bash -lc 'if command -v code >/dev/null; then code CHALLENGE.md; fi'",
   "waitFor": "postCreateCommand",
   "forwardPorts": [9400, 9401, 8233, 7233, 27017, 4317, 9000, 9001],
   "portsAttributes": {
