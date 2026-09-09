@@ -69,7 +69,8 @@ check "api: /healthz" "$(http_code localhost:9400/healthz)"
 check "api: /docs" "$(http_code localhost:9400/docs)"
 check "api: indicators" "curl -s --max-time 5 'localhost:9400/api/v1/indicators?tenant_id=acme&limit=1' | grep -qE '\"items\":\[\{' && echo responded"
 check "mock upstream" "$(http_code localhost:9401/)"
-check "worker process" "pgrep -f worker.py >/dev/null && echo running"
+# bracketed so the pattern does not match the shell that check() runs it in
+check "worker process" "pgrep -f '[w]orker\.py' >/dev/null && echo running"
 
 check "platform: render" "scripts/platform_check.sh render >/dev/null && echo 2 applications"
 check "platform: providers" "[ -d deploy/terraform/.terraform/providers ] && echo cached"

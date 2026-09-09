@@ -34,6 +34,10 @@ KUBECONFORM_VERSION=0.7.0
 ACTIONLINT_VERSION=1.7.7
 YQ_VERSION=4.53.2
 
+work_dir=
+# a RETURN trap fires again when the calling stage returns, by which point work_dir is gone
+trap 'if [ -n "$work_dir" ]; then command rm -rf "$work_dir"; fi' EXIT
+
 platform_pair() {
   local os arch
   case "$(uname -s)" in
@@ -70,29 +74,27 @@ install_bin() {
 
 stage_tools() {
   read -r os arch <<<"$(platform_pair)"
-  local work
-  work=$(mktemp -d)
-  trap 'command rm -rf "$work"' RETURN
+  work_dir=$(mktemp -d)
 
   echo "==> platform tooling ($os/$arch)"
 
   if ! command -v kubeconform >/dev/null 2>&1; then
     curl -fsSL "https://github.com/yannh/kubeconform/releases/download/v${KUBECONFORM_VERSION}/kubeconform-${os}-${arch}.tar.gz" |
-      tar -xz -C "$work" kubeconform
-    install_bin kubeconform "$work/kubeconform"
+      tar -xz -C "$work_dir" kubeconform
+    install_bin kubeconform "$work_dir/kubeconform"
   fi
   kubeconform -v
 
   if ! command -v actionlint >/dev/null 2>&1; then
     curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_${os}_${arch}.tar.gz" |
-      tar -xz -C "$work" actionlint
-    install_bin actionlint "$work/actionlint"
+      tar -xz -C "$work_dir" actionlint
+    install_bin actionlint "$work_dir/actionlint"
   fi
   actionlint --version | head -1
 
   if ! command -v yq >/dev/null 2>&1; then
-    curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${os}_${arch}" -o "$work/yq"
-    install_bin yq "$work/yq"
+    curl -fsSL "https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/yq_${os}_${arch}" -o "$work_dir/yq"
+    install_bin yq "$work_dir/yq"
   fi
   yq --version
 
@@ -119,7 +121,10 @@ stage_prebuild() {
 
 stage_infra() {
   echo "==> infrastructure"
-  docker compose up -d --wait
+  docker compose up -d
+  # `--wait` counts minio-init's clean exit as a failure, so the bucket job is gated on its own
+  docker compose wait minio-init >/dev/null
+  docker compose up -d --wait --no-recreate mongo temporal minio otel-collector
   docker compose ps
 }
 
