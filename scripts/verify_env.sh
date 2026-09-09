@@ -77,7 +77,7 @@ check "platform: providers" "[ -d deploy/terraform/.terraform/providers ] && ech
 
 echo
 if [ "$failures" -eq 0 ]; then
-  echo "Ready. Compare the seed counts against the baseline in the interviewer pack before you start."
+  echo "Ready."
 else
   echo "$failures check(s) failed. Run scripts/bootstrap.sh, then re-run this."
 fi
