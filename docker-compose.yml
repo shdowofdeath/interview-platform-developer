@@ -15,7 +15,7 @@ services:
       retries: 20
 
   temporal:
-    image: temporalio/temporal:latest
+    image: temporalio/temporal:1.8.3
     command:
       - server
       - start-dev

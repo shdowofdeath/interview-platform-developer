@@ -1,8 +1,11 @@
 {
   "name": "nightjar",
-  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-trixie",
   "features": {
-    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    // moby has no trixie packages; docker-ce does
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "moby": false
+    },
     "ghcr.io/devcontainers/features/github-cli:1": {},
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
       "minikube": "none"

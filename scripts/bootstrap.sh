@@ -107,7 +107,7 @@ stage_tools() {
   # cached here so the first terraform plan of the session does not wait on a provider download
   if command -v terraform >/dev/null 2>&1; then
     echo "==> terraform provider cache"
-    terraform -chdir=deploy/terraform init -input=false -backend=false >/dev/null
+    terraform -chdir=deploy/terraform init -input=false >/dev/null
     terraform -chdir=deploy/terraform providers | sed 's/^/    /'
   fi
 }
