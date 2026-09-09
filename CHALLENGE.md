@@ -71,6 +71,12 @@ it fails, say so rather than working around it.
 OpenAPI `:9400/docs` · Temporal UI `:8233` · MinIO console `:9001`
 (`nightjar` / `nightjar-dev-secret`).
 
+In a Codespace those ports are only reachable on the codespace's own hostname,
+not on `localhost`. The **Ready check** terminal prints the full links, and the
+editor's **Ports** panel opens them too. Do not assemble the hostname yourself.
+`localhost` is still correct inside a terminal, which is where every `curl` in
+these docs runs.
+
 Keep the worker log visible. A lot of what you need to see only appears there.
 
 ---

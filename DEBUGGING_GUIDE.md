@@ -12,6 +12,12 @@ Commands you will want during the session. Nothing here is a hint about what is 
 | Spans the service actually emitted | `docker compose logs -f otel-collector` |
 | Upstream vendor behaviour, rate limiting, 429/401 | the `mock-upstream` terminal |
 
+Every `curl` below runs in a terminal, where `localhost` is correct. To open the
+Temporal UI or the MinIO console in a browser from a Codespace, take the link
+from the **Ready check** terminal or the editor's **Ports** panel - the ports are
+served on the codespace's own hostname, and a hand-built URL fails with a
+certificate error.
+
 A failing workflow *task* never reaches the HTTP caller. If a `POST` returns 202 and the workflow never finishes, the worker terminal is the only place the reason exists.
 
 ## Mongo
