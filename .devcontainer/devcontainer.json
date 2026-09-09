@@ -7,10 +7,15 @@
       "moby": false
     },
     "ghcr.io/devcontainers/features/github-cli:1": {},
+    // the lock file pins the features; these pin what the features install, which they
+    // otherwise resolve to latest at build time - every candidate gets one toolchain
     "ghcr.io/devcontainers/features/kubectl-helm-minikube:1": {
+      "version": "1.34.11",
+      "helm": "3.19.0",
       "minikube": "none"
     },
     "ghcr.io/devcontainers/features/terraform:1": {
+      "version": "1.16.1",
       "tflint": "none",
       "terragrunt": "none"
     }
