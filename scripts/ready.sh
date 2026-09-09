@@ -26,12 +26,22 @@ fi
 scripts/verify_env.sh
 failures=$?
 
-cat <<'EOF'
+# a forwarded port is only reachable on the codespace's own hostname, never localhost
+url() {
+  if [ -n "${CODESPACE_NAME:-}" ]; then
+    echo "https://${CODESPACE_NAME}-$1.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
+  else
+    echo "http://localhost:$1"
+  fi
+}
+
+cat <<EOF
 
   Start here      CHALLENGE.md - six stations, 90 minutes
-  API             http://localhost:9400/docs
-  Temporal        http://localhost:8233
-  MinIO           http://localhost:9001    nightjar / nightjar-dev-secret
+  API             $(url 9400)/docs
+  Temporal        $(url 8233)
+  MinIO           $(url 9001)
+                  nightjar / nightjar-dev-secret
 
   The test suite and the linter are not green on arrival. You did not cause
   that, and you are not expected to get them green. Station 1 tells you which

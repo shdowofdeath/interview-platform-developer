@@ -48,6 +48,8 @@ cd services/mock-upstream && uv run uvicorn app:app --port 9401
 - Temporal UI: <http://localhost:8233>
 - Collector: `docker compose logs -f otel-collector`
 
+`localhost` is right from a terminal. To open one of these in a browser from outside the box, take the link from the **Ready check** terminal, which prints the forwarded URLs, or click the port in the editor's **Ports** panel.
+
 The worker logs every activity start and failure. Keep it visible; several failure modes never reach the HTTP response.
 
 ## Driving the system
